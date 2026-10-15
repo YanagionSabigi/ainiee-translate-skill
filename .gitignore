@@ -20,3 +20,19 @@ cache.json
 
 # build artifacts
 /dist/
+
+# Local PDF preparation, models, credentials and private publication evidence
+/.ruff_cache/
+/build/
+.env
+.env.*
+!.env.example
+/local/
+/out/
+/models/
+/runtime/
+/books/
+/state/
+cache.json.bak.*
+Thumbs.db
+/.superpowers/
