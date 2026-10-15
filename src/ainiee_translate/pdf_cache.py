@@ -54,6 +54,7 @@ def apply_cache_to_book(book: BookDocument, cache_file: CacheFile, *, allow_part
         if item.translation_status not in (1, 2) or not item.translated_text.strip():
             missing.append(block['unit_id'])
             block['target_text'] = f"[UNTRANSLATED {block['unit_id']}]"
+            block['diagnostic_missing'] = True
         else:
             from .pdf_protection import validate_protected_tokens
             if validate_protected_tokens(block['source_text'], item.translated_text, expected=block.get('protected_tokens', [])):
