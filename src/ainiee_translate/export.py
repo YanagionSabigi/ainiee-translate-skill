@@ -17,11 +17,15 @@ DEFAULT_CONFIG = {
 
 
 def export_project(project, output_path: str, input_path: str, config: dict | None = None, *,
-                   formats=None, allow_partial=False, cache_root: Path | None = None) -> None:
+                   formats=None, allow_partial=False, cache_root: Path | None = None,
+                   book_settings=None, pdf_engines=None) -> None:
     config = config or DEFAULT_CONFIG
     formats = list(dict.fromkeys(formats or ['source']))
-    if any(f not in ('source', 'md', 'epub') for f in formats):
+    if any(f not in ('source', 'md', 'epub', 'latex', 'typst', 'pdf') for f in formats):
         raise ValueError('Unknown export format')
+    pdf_engines = list(dict.fromkeys(pdf_engines or ['latex', 'typst']))
+    if any(engine not in ('latex', 'typst') for engine in pdf_engines):
+        raise ValueError('Unknown PDF engine')
     structured = {sp: cf for sp, cf in project.files.items() if cf.extra.get('ainiee_pdf', {}).get('backend') == 'mineru'}
     ordinary = {sp: cf for sp, cf in project.files.items() if sp not in structured}
     if ordinary and any(fmt != 'source' for fmt in formats):
@@ -42,9 +46,19 @@ def export_project(project, output_path: str, input_path: str, config: dict | No
         for fmt in wanted:
             if fmt == 'md':
                 export_markdown(target, out)
-            else:
+            elif fmt == 'epub':
                 from .book_epub import export_epub
                 export_epub(target, out / ('book.draft.epub' if target.get('diagnostic_draft') else 'book.epub'))
+        for engine in ('latex', 'typst'):
+            if engine not in wanted and not ('pdf' in wanted and engine in pdf_engines):
+                continue
+            from .book_pdf import export_template_sources, compile_book_pdf
+            source = export_template_sources(target, out / engine, engine=engine,
+                                             settings=book_settings if book_settings is not None else {})
+            if 'pdf' in wanted and engine in pdf_engines:
+                result = compile_book_pdf(source, engine=engine, output_path=source.with_suffix('.pdf'))
+                if result['status'] != 'passed':
+                    raise ValueError(f'{engine} PDF {result["status"]}: {result.get("diagnostic", "see compile log")}')
         if target.get('diagnostic_draft'):
             from .mineru_local import write_json
             write_json(out / 'missing-units.json', target['missing_units'])
@@ -81,12 +95,16 @@ def main(argv=None):
     ap.add_argument("--cache", required=True)
     ap.add_argument("--output", required=True)
     ap.add_argument("--input", required=True)
-    ap.add_argument('--format', dest='formats', action='append', choices=['source', 'md', 'epub'])
+    ap.add_argument('--format', dest='formats', action='append', choices=['source', 'md', 'epub', 'latex', 'typst', 'pdf'])
+    ap.add_argument('--book-settings', help='JSON object overriding book template defaults')
+    ap.add_argument('--pdf-engine', dest='pdf_engines', action='append', choices=['latex', 'typst'],
+                    help='Compiler for --format pdf (repeatable; default: both)')
     ap.add_argument('--allow-partial', action='store_true')
     a = ap.parse_args(argv)
     proj = cache_io.load_cache(a.cache)
     export_project(proj, a.output, a.input, formats=a.formats, allow_partial=a.allow_partial,
-                   cache_root=Path(a.cache).resolve().parent)
+                   cache_root=Path(a.cache).resolve().parent, pdf_engines=a.pdf_engines,
+                   book_settings=json.loads(Path(a.book_settings).read_text(encoding='utf8')) if a.book_settings else None)
     print(f"exported -> {a.output}")
 
 

@@ -1,6 +1,6 @@
 ---
 name: ainiee-translate
-description: Use when translating a novel, EPUB, TXT or PDF on the coding agent itself, resuming an AiNiee translation cache, or exporting reviewed PDF translations to Markdown/EPUB. Triggers on "用 agent 翻译这本书", "agent 版 aniee 翻译", "把这本 epub 翻译了" and PDF translation requests.
+description: Use when translating a novel, EPUB, TXT or PDF on the coding agent itself, resuming an AiNiee translation cache, or exporting reviewed PDF translations to Markdown/EPUB or LaTeX/Typst book templates. Triggers on "用 agent 翻译这本书", "agent 版 aniee 翻译", "把这本 epub 翻译了" and PDF translation requests.
 ---
 
 # ainiee-translate 技能指南
@@ -25,6 +25,8 @@ parse → 构建锁定词汇表 → 逐章翻译（agent 按规则） → 写回
 ## 前置依赖与安装（重要）
 
 `parse`/`export` 的轻量格式随技能打包在 `scripts/ainiee_translate/_vendor/` 下（改写自 AiNiee、剥离其 App 框架），无需克隆 AiNiee App。自带 epub/txt/md/docx/xlsx/pptx/csv/srt/vtt/ass/lrc/po/json 系列。**新 PDF 默认本地 MinerU**，通过独立解释器调用；先阅读并执行 [PDF 工作流](references/pdf_workflow.md)。`AINIEE_REPO` 用于显式 BabelDOC 和原有 Windows Office 回退。
+
+请求 LaTeX/Typst 源码或模板 PDF 时，再读 [书籍模板](references/book_templates.md)，先检查可选工具和字体。沿用已审阅的同一译文结构；保留源码、编译报告并检查真实 PDF，不重复提取或翻译，不把编译失败后残留的旧 PDF 当作成品。
 
 **一次性准备：**
 

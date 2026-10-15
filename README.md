@@ -46,7 +46,7 @@ python3 -m venv ~/.venvs/ainiee-translate
 ```
 
 自带 15 种格式：`epub` `txt` `md` `docx` `xlsx` `pptx` `csv` `srt` `vtt` `ass` `lrc` `po` `json` `rpy` `trans`。
-新 PDF 默认通过独立本地 MinerU 环境准备并审阅结构，再复用翻译/润色缓存导出 Markdown/EPUB。详见 [PDF 工作流](skills/ainiee-translate/references/pdf_workflow.md) 与 [实测范围](docs/mineru-pdf-validation.md)。`AINIEE_REPO` 供显式 BabelDOC 和原有 Office 回退。
+新 PDF 默认通过独立本地 MinerU 环境准备并审阅结构，再复用翻译/润色缓存导出 Markdown/EPUB。可选书籍模板还可生成 LaTeX、Typst 源码及各自 PDF。详见 [PDF 工作流](skills/ainiee-translate/references/pdf_workflow.md)、[书籍模板](skills/ainiee-translate/references/book_templates.md) 与 [核心实测范围](docs/mineru-pdf-validation.md)。`AINIEE_REPO` 供显式 BabelDOC 和原有 Office 回退。
 
 ### 方式一：Claude Code 插件（推荐）
 

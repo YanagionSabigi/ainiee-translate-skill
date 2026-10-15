@@ -1,0 +1,6 @@
+{
+  "title": "Translated book", "author": "", "translator": "", "language": "zh",
+  "page_size": "a4", "margin_mm": 20, "font_size": 12,
+  "font_latin": "Latin Modern Roman", "font_cjk": "STZhongsong",
+  "font_mono": "DejaVu Sans Mono", "toc": true, "page_numbers": true
+}

@@ -1,6 +1,6 @@
 # Local MinerU PDF migration: implementation and validation
 
-Status: implemented on a local feature branch; not published. LaTeX/Typst/template PDF work remains deferred.
+Core status: [upstream draft PR #3](https://github.com/xuanji86/ainiee-translate-skill/pull/3); not released. LaTeX/Typst template work is a separate follow-up; see [template design](book-template-design.md) and its validation report.
 
 ## Behavior
 

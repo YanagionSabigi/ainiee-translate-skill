@@ -72,8 +72,8 @@ python -m ainiee_translate.book_check out/book/book.epub \
 
 Use the export path printed/created for the source name. `--format source` means Markdown for MinerU and logs that choice. Normal export rejects unfinished units; `--allow-partial` creates explicitly named diagnostic drafts and a missing-unit list, without substituting source prose. Formal outputs use relative resources and contain publication content only. Official EPUBCheck availability/results are separate from local structural checks. Open the actual EPUB ZIP in a reader and check its exact tested width/font settings, contents position, navigation, chapter starts, formulas, captions and every note return. Neither synthetic tests nor EPUBCheck establish source fidelity or universal reader support.
 
-## Legacy PDF and deferred templates
+## Legacy PDF and optional templates
 
 `parse --pdf-backend babeldoc` explicitly selects the original AiNiee path and requires `AINIEE_REPO`. Export follows cache provenance: a legacy PDF cache stays on its original writer. Converting that flat cache to Markdown/EPUB requires a new reviewed structured project; automatic translation migration is not attempted. Original Office fallback and native EPUB/TXT behavior remain available.
 
-LaTeX, Typst, template PDF output and rosepine-latex integration are deferred; these commands do not claim them.
+For editable LaTeX/Typst sources and their template PDFs, see [book_templates.md](book_templates.md). Typesetting consumes the same reviewed target structure and never re-extracts or retranslates the book. Compiler dependencies remain optional.

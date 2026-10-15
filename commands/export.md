@@ -15,3 +15,5 @@ PYTHONPATH="${CLAUDE_PLUGIN_ROOT}/skills/ainiee-translate/scripts" \
 新 MinerU PDF 使用 `--format md --format epub`；默认 `source` 会明确解释为 Markdown。先读技能 `references/pdf_workflow.md`，确认源结构已核验、应译单元完成、公式与资源可定位，再导出。`--allow-partial` 仅输出标明用途的诊断草稿及缺失单元清单。旧 BabelDOC PDF 缓存保持原 writer；请求新的 MD/EPUB 转换时另建结构项目，不按 parse 新默认值改变旧缓存来源。
 
 对真正的 EPUB ZIP 运行 `ainiee_translate.book_check`，分别记录本地结构、正式 EPUBCheck 和实际阅读器检查。未运行的检查保持未测状态，报告实际版本/宽度/字体与未解决问题。
+
+需要模板排版时，先读 `references/book_templates.md`。`--format latex --format typst` 生成可编辑源码；`--format pdf` 默认编译两条路线，`--pdf-engine latex|typst` 可选择一路。`--book-settings` 指向 JSON 配置。使用现有目标结构，不重新提取或翻译；工具/字体缺失或编译失败必须报告，不能把残留旧 PDF 当作新成品。
