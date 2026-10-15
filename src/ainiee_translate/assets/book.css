@@ -1,0 +1,16 @@
+/* Original stylesheet for reflowable publications. */
+body { line-height: 1.55; margin: 1em; overflow-wrap: break-word; }
+p { margin: 0.65em 0; }
+img { max-width: 100%; height: auto; }
+.front-image { margin: 0; text-align: center; }
+.front-image img { width: 100%; max-height: 95vh; object-fit: contain; }
+.figure, .formula { text-align: center; margin: 1em 0; }
+.caption { font-size: 0.9em; text-align: center; }
+.contents-level-2 { margin-inline-start: 1.5em; }
+.notes { margin-top: 2em; font-size: 0.9em; }
+.noteref { font-size: 0.75em; vertical-align: super; line-height: 0; }
+table { border-collapse: collapse; max-width: 100%; }
+td, th { border: thin solid currentColor; padding: 0.3em; }
+math { font-size: 1em; max-width: 100%; }
+pre { white-space: pre-wrap; }
+h2, h3, h4, h5, h6 { break-before: auto; }

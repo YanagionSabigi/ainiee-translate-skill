@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-pdf = ["pymupdf>=1.24", "jsonschema>=4.22"]
+pdf = ["pymupdf>=1.24", "jsonschema>=4.22", "latex2mathml>=3.81"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

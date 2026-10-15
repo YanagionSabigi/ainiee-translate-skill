@@ -125,7 +125,8 @@ def normalize_book(work: Path) -> BookDocument:
                 blocks=blocks, notes=copy.deepcopy(review.get('notes', [])), assets=copy.deepcopy(review.get('assets', [])),
                 toc=copy.deepcopy(review.get('toc', {})), issues=copy.deepcopy(review.get('issues', [])),
                 provenance=dict(work=str(work), extraction_sha256=digest(extraction), review_sha256=digest(review),
-                                publication_input_sha256=digest(plan), bookmarks=inspection['bookmarks']))
+                                publication_input_sha256=digest(plan), bookmarks=inspection['bookmarks'],
+                                publication_roles=[dict(source_page_idx=p['page'] - 1, role=p['role']) for p in plan['pages']]))
     bookmarks = {b['bookmark_index']: b for b in inspection['bookmarks']}
     for entry in book['toc'].get('entries', []):
         bookmark = bookmarks.get(entry.get('bookmark_index'))

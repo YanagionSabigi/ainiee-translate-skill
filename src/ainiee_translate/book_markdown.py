@@ -97,17 +97,31 @@ def _render_block(block, by_id, assets):
 
 def render_markdown(book: BookDocument) -> str:
     validate_book(book, require_translation=True)
+    from .pdf_publication import compile_publication
+    book = compile_publication(book)
     assets = validated_assets(book)
     by_id = {b['id']: b for b in book['blocks']}
     note_bodies = {bid for note in book.get('notes', []) for bid in note['block_ids']}
     cells = {cell for b in book['blocks'] if b['kind'] == 'table' for row in b['rows'] for cell in row}
     lines = ['<!-- DIAGNOSTIC DRAFT: incomplete translation -->'] if book.get('diagnostic_draft') else []
-    for chapter in book['chapters']:
+    def contents():
+        return '\n\n'.join('  ' * (entry['level'] - 1) + f"[{_escape(entry['display_title'])}](#{entry['target']})" for entry in book['toc']['entries'])
+    chapters = {chapter['id']: chapter for chapter in book['chapters']}
+    for entry in book['publication_order']:
+        if entry['kind'] == 'front-image':
+            lines.append(f"![{entry['role']}]({assets[entry['asset_id']][1]})")
+            continue
+        if entry['kind'] == 'toc':
+            lines.append(contents())
+            continue
+        chapter = chapters[entry['id']]
         lines.append(f'<a id="{chapter["id"]}"></a>')
         if not chapter.get('title_block_id'):
             lines.append('# ' + _escape(chapter.get('display_title') or chapter.get('title') or chapter['source_title']))
         for block in book['blocks']:
             if block['chapter_id'] == chapter['id'] and block['id'] not in note_bodies | cells:
+                if book['toc']['placement'].get('before_block') == block['id']:
+                    lines.append(contents())
                 lines.extend([f'<a id="{block["id"]}"></a>', _render_block(block, by_id, assets)])
         for note in book.get('notes', []):
             if note['chapter_id'] == chapter['id']:

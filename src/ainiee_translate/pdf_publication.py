@@ -5,6 +5,7 @@ import json
 import math
 from pathlib import Path
 from typing import Any
+import copy
 
 from .mineru_local import digest, sha256, write_json
 
@@ -131,3 +132,107 @@ def prepare_extraction_inputs(input_pdf: Path, plan: dict[str, Any], work: Path)
                        publication_input_sha256=plan_hash, page_map=page_map)]
         write_json(index, inputs)
         return inputs
+
+
+def compile_publication(book):
+    """Compile one reviewed mapping for both visible contents and navigation."""
+    from .book_model import validate_book
+    from .pdf_protection import TOKEN
+    validate_book(book, require_translation=True)
+    book = copy.deepcopy(book)
+    chapters = {c['id']: c for c in book['chapters']}
+    blocks = {b['id']: b for b in book['blocks']}
+    toc = book.get('toc', {})
+    bookmarks = {b['bookmark_index']: b for b in book['provenance'].get('bookmarks', [])}
+    if not bookmarks or toc.get('source') != 'pdf-bookmarks' or not toc.get('evidence'):
+        raise ValueError('Publication requires reviewed PDF bookmark mapping; no TOC is fabricated')
+    for chapter in chapters.values():
+        heading = blocks.get(chapter.get('title_block_id'))
+        title = heading.get('target_text') if heading else chapter.get('display_title')
+        if not title:
+            raise ValueError('Chapter requires a translated title block or reviewed display_title')
+        chapter['display_title'] = title
+    covered, current_chapter = set(), None
+    for entry in toc.get('entries', []):
+        index, target, level = entry['bookmark_index'], entry['target'], entry['level']
+        if index not in bookmarks or index in covered or level not in (1, 2):
+            raise ValueError('Invalid or duplicate bookmark mapping')
+        covered.add(index)
+        if level == 1 and target in chapters:
+            current_chapter = target
+            entry['chapter_id'] = target
+            entry['display_title'] = chapters[target]['display_title']
+        elif (level == 2 and target in blocks and blocks[target]['kind'] == 'heading'
+              and blocks[target]['chapter_id'] == current_chapter):
+            entry['chapter_id'] = current_chapter
+            entry['display_title'] = blocks[target]['target_text']
+        else:
+            raise ValueError('Bookmark target does not match reviewed chapter/section hierarchy')
+        entry['source_title'] = bookmarks[index]['source_title']
+    for omission in toc.get('omissions', []):
+        index = omission['bookmark_index']
+        if index not in bookmarks or index in covered or not omission.get('evidence') or not omission.get('reason'):
+            raise ValueError('Invalid bookmark omission evidence')
+        covered.add(index)
+    if covered != set(bookmarks):
+        raise ValueError('Unaccounted PDF bookmarks')
+    placement = toc.get('placement', {})
+    if (len(placement) == 1 and ('before' in placement or 'after' in placement)
+            and next(iter(placement.values())) in chapters):
+        pass
+    elif (set(placement) == {'chapter', 'before_block'} and placement['chapter'] in chapters
+          and placement['before_block'] in blocks
+          and blocks[placement['before_block']]['chapter_id'] == placement['chapter']):
+        pass
+    else:
+        raise ValueError('Unknown or ambiguous reviewed TOC position')
+    note_map = {n['id']: n for n in book.get('notes', [])}
+    for note in note_map.values():
+        note['references'] = []
+    note_bodies = {bid for note in note_map.values() for bid in note['block_ids']}
+    for chapter in chapters.values():
+        numbered = {}
+        for block in book['blocks']:
+            if block['chapter_id'] != chapter['id'] or block['id'] in note_bodies:
+                continue
+            for position, token in enumerate(TOKEN.findall(block.get('target_text', ''))):
+                node = block.get('inlines', {}).get(token, {})
+                if node.get('kind') != 'note':
+                    continue
+                note = note_map.get(node.get('note_id'))
+                if note is None or note['chapter_id'] != chapter['id']:
+                    raise ValueError('Unresolved or cross-chapter note reference')
+                numbered.setdefault(note['id'], len(numbered) + 1)
+                node['number'] = numbered[note['id']]
+                node['ref_id'] = f"ref-{block['id']}-{position}"
+                note['number'] = node['number']
+                note['references'].append(node['ref_id'])
+        chapter['note_order'] = list(numbered)
+    if any(not n['references'] for n in note_map.values()) and not book.get('diagnostic_draft'):
+        raise ValueError('Orphan note body without reviewed body references')
+    if book.get('diagnostic_draft'):
+        for chapter in chapters.values():
+            for note in note_map.values():
+                if note['chapter_id'] == chapter['id'] and not note['references']:
+                    chapter['note_order'].append(note['id'])
+                    note['number'] = len(chapter['note_order'])
+    roles = {(r['source_page_idx'], r['role']) for r in book['provenance'].get('publication_roles', [])}
+    front = []
+    for role in ('cover', 'back-cover'):
+        matches = [a for a in book.get('assets', []) if a.get('role') == role]
+        if len(matches) > 1:
+            raise ValueError('Duplicate front image role')
+        if matches:
+            asset = matches[0]
+            if (asset.get('source_page_idx'), role) not in roles:
+                raise ValueError('Front image is not bound to reviewed source page role')
+            front.append(dict(id=role + '-page', kind='front-image', asset_id=asset['id'], role=role))
+    order = list(front)
+    for chapter in book['chapters']:
+        if placement.get('before') == chapter['id']:
+            order.append(dict(id='visible-toc', kind='toc'))
+        order.append(dict(id=chapter['id'], kind='chapter'))
+        if placement.get('after') == chapter['id']:
+            order.append(dict(id='visible-toc', kind='toc'))
+    book['publication_order'] = order
+    return book
