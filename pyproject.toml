@@ -16,12 +16,15 @@ dependencies = [
     "chardet",          # optional encoding sniff (txt/srt/...); graceful if absent
 ]
 
+[project.optional-dependencies]
+pdf = ["pymupdf>=1.24", "jsonschema>=4.22"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
 
 [tool.setuptools.package-data]
-ainiee_translate = ["*.html"]
+ainiee_translate = ["*.html", "schemas/*.json", "schemas/*NOTICE*", "assets/*.css"]
 
 [build-system]
 requires = ["setuptools"]
