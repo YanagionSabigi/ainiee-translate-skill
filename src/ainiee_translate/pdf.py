@@ -38,14 +38,7 @@ def extract_work(work: Path, *, python: Path | None = None, env=None):
     return extraction
 
 
-def draft_work(work: Path):
-    work = Path(work)
-    path = work / 'publication.review.json'
-    if path.exists():
-        return read_json(path)
-    extraction = read_json(work / 'extraction.json')
-    if extraction.get('status') != 'completed':
-        raise ValueError('Complete extraction before drafting structure')
+def extraction_candidates(work: Path, extraction: dict):
     candidates = []
     for imp in extraction['imports']:
         middle = read_json(work / imp['root'] / imp['manifest']['middle_json'])
@@ -56,8 +49,19 @@ def draft_work(work: Path):
             for block in page['blocks']:
                 candidates.append(dict(raw_id=f"{imp['manifest']['bundle_sha256']}/p{page['page_idx']}/b{block['index']}",
                                        source_ref=page_map[page['page_idx']], block=block))
+    return candidates
+
+
+def draft_work(work: Path):
+    work = Path(work)
+    path = work / 'publication.review.json'
+    if path.exists():
+        return read_json(path)
+    extraction = read_json(work / 'extraction.json')
+    if extraction.get('status') != 'completed':
+        raise ValueError('Complete extraction before drafting structure')
     review = dict(schema='ainiee-pdf-review/1', source_sha256=extraction['source_sha256'],
-                  extraction_sha256=digest(extraction), reviewed=False, evidence='', candidates=candidates,
+                  extraction_sha256=digest(extraction), reviewed=False, evidence='', candidates=extraction_candidates(work, extraction),
                   resolutions=[], chapters=[], blocks=[], notes=[], assets=[], toc={}, issues=[])
     write_json(path, review)
     return review
