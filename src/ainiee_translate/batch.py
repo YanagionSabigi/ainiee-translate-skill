@@ -21,10 +21,17 @@ from ._vendor.ModuleFolders.Service.Cache.CacheItem import TranslationStatus
 
 
 # ---------------------------------------------------------------- read ----
+def _row(item):
+    row = {'text_index': item.text_index, 'source_text': item.source_text}
+    if 'ainiee_pdf' in (item.extra or {}):
+        row['extra'] = {'ainiee_pdf': item.extra['ainiee_pdf']}
+    return row
+
+
 def read_batch(project, size: int = 100) -> list[dict]:
     out = []
     for item in cache_io.iter_untranslated(project):
-        out.append({"text_index": item.text_index, "source_text": item.source_text})
+        out.append(_row(item))
         if len(out) >= size:
             break
     return out
@@ -34,7 +41,7 @@ def read_translated_batch(project, size: int = 100) -> list[dict]:
     """Next batch of TRANSLATED-not-yet-polished items, for the polish pass."""
     out = []
     for item in cache_io.iter_translated_unpolished(project):
-        out.append({"text_index": item.text_index, "source_text": item.source_text,
+        out.append({**_row(item),
                     "translated_text": item.translated_text or ""})
         if len(out) >= size:
             break
@@ -79,7 +86,7 @@ def row_text(r: dict) -> str:
 
 def make_check(allow_tag_mismatch: bool = False):
     def check(item, text):
-        return audit.lint_pair(item.source_text, text, allow_tag_mismatch)
+        return audit.lint_pair(item.source_text, text, allow_tag_mismatch, extra=item.extra)
     return check
 
 
@@ -116,6 +123,9 @@ def chapters(project) -> list[tuple]:
     for cf in project.files.values():
         for it in cf.items:
             k = (it.extra or {}).get("item_id") or (cf.storage_path if multi else None)
+            pdf_chapter = (it.extra or {}).get('ainiee_pdf', {}).get('chapter_id')
+            if pdf_chapter:
+                k = (cf.storage_path, pdf_chapter)
             if runs and runs[-1][0] == k:
                 runs[-1][1].append(it)
             else:
@@ -204,7 +214,7 @@ def split_project(project, target: int, out_dir: str | None, context: int, stage
         if out_dir:
             src_path = os.path.join(out_dir, f"grp_{gid}_src.json")
             with open(src_path, "w", encoding="utf-8") as f:
-                rows_out = [{"text_index": it.text_index, "source_text": it.source_text} for it in items]
+                rows_out = [_row(it) for it in items]
                 if stage in ("polish", "review"):           # the polisher/reviewer needs the current translation too
                     for r, it in zip(rows_out, items):
                         r["translated_text"] = it.translated_text or ""
@@ -220,7 +230,7 @@ def split_project(project, target: int, out_dir: str | None, context: int, stage
                 ctx = (translated if translated else prev)[-context:]
                 ctx_path = os.path.join(out_dir, f"grp_{gid}_ctx.json")
                 with open(ctx_path, "w", encoding="utf-8") as f:
-                    json.dump([{"text_index": it.text_index, "source_text": it.source_text,
+                    json.dump([{**_row(it),
                                 "translated_text": it.translated_text or "",
                                 "translation_status": int(it.translation_status)} for it in ctx],
                               f, ensure_ascii=False, indent=1)
@@ -234,6 +244,7 @@ def validate(src_rows: list[dict], trans_rows: list[dict], allow_tag_mismatch: b
     src_idx = [int(r["text_index"]) for r in src_rows]
     tr_idx = [int(r["text_index"]) for r in trans_rows]
     src_by = {int(r["text_index"]): r.get("source_text") or "" for r in src_rows}
+    extras = {int(r['text_index']): r.get('extra') for r in src_rows}
     hard = []
     missing = sorted(set(src_idx) - set(tr_idx))
     extra = sorted(set(tr_idx) - set(src_idx))
@@ -249,7 +260,7 @@ def validate(src_rows: list[dict], trans_rows: list[dict], allow_tag_mismatch: b
         ti = int(r["text_index"])
         if ti not in src_by:
             continue
-        h, s = audit.lint_pair(src_by[ti], row_text(r), allow_tag_mismatch)
+        h, s = audit.lint_pair(src_by[ti], row_text(r), allow_tag_mismatch, extra=extras.get(ti))
         if h:
             seg_hard.append({"text_index": ti, "reasons": h})
         for c in s:

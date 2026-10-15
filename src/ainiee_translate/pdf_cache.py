@@ -55,6 +55,9 @@ def apply_cache_to_book(book: BookDocument, cache_file: CacheFile, *, allow_part
             missing.append(block['unit_id'])
             block['target_text'] = f"[UNTRANSLATED {block['unit_id']}]"
         else:
+            from .pdf_protection import validate_protected_tokens
+            if validate_protected_tokens(block['source_text'], item.translated_text, expected=block.get('protected_tokens', [])):
+                raise ValueError('Translation has damaged protected structure tokens')
             block['target_text'] = item.translated_text
     if missing and not allow_partial:
         raise ValueError(f'Incomplete translation: {len(missing)} untranslated units')

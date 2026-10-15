@@ -96,6 +96,15 @@ def normalize_book(work: Path) -> BookDocument:
         accounted.update(refs)
         block['source_refs'] = [copy.deepcopy(candidates[raw_id]['source_ref']) for raw_id in refs]
         if block.get('source_text', '').strip():
+            from .pdf_protection import escape_collisions, TOKEN, validate_protected_tokens
+            inlines = block.setdefault('inlines', {})
+            text, literals = escape_collisions(block['source_text'], reserved=inlines)
+            block['source_text'] = text
+            inlines.update(literals)
+            block['protected_tokens'] = TOKEN.findall(text)
+            if (set(inlines) != set(block['protected_tokens']) or
+                    validate_protected_tokens(text, text, expected=block['protected_tokens'])):
+                raise ValueError('Invalid source inline token mapping')
             block['unit_id'] = 'u-' + digest([source_hash, refs, block['id']])[:32]
             block.setdefault('protected_tokens', [])
         block.pop('target_text', None)
