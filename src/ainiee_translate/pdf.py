@@ -34,21 +34,38 @@ def extract_work(work: Path, *, python: Path | None = None, env=None):
                         'root': str(imported.relative_to(work)), 'manifest': manifest})
     extraction = dict(schema='ainiee-pdf-extraction/1', source_sha256=inspection['source_sha256'],
                       publication_input_sha256=digest(plan), imports=imports, status='completed')
+    extraction_candidates(work, extraction)  # Exact page coverage precedes completed state.
     write_json(work / 'extraction.json', extraction)
     return extraction
 
 
 def extraction_candidates(work: Path, extraction: dict):
     candidates = []
+    def walk(node, path=''):
+        if isinstance(node, list):
+            for index, value in enumerate(node):
+                yield from walk(value, f'{path}/{index}')
+        elif isinstance(node, dict):
+            kind = node.get('type')
+            is_span = kind in ('equation_inline', 'code_inline', 'hyperlink') or (kind == 'text' and isinstance(node.get('content'), str))
+            if kind and not is_span:
+                yield path, node
+            for key, value in node.items():
+                if isinstance(value, (list, dict)):
+                    yield from walk(value, f'{path}/{key}')
     for imp in extraction['imports']:
         middle = read_json(work / imp['root'] / imp['manifest']['middle_json'])
         page_map = {row['input_page_idx']: row for row in imp['page_map']}
+        if (len(page_map) != len(imp['page_map']) or set(page_map) != set(range(len(page_map)))
+                or {page['page_idx'] for page in middle['pages']} != set(page_map)):
+            raise ValueError('Extraction page coverage differs from expected original page map')
         for page in middle['pages']:
             if page['page_idx'] not in page_map:
                 raise ValueError('Missing original page/region mapping')
             for block in page['blocks']:
-                candidates.append(dict(raw_id=f"{imp['manifest']['bundle_sha256']}/p{page['page_idx']}/b{block['index']}",
-                                       source_ref=page_map[page['page_idx']], block=block))
+                for path, node in walk(block):
+                    candidates.append(dict(raw_id=f"{imp['manifest']['bundle_sha256']}/p{page['page_idx']}/b{block['index']}{path}",
+                                           source_ref={**page_map[page['page_idx']], 'block_path': f"b{block['index']}{path}"}, block=node))
     return candidates
 
 

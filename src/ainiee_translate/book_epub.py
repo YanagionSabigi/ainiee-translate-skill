@@ -153,7 +153,7 @@ def export_epub(book, output_path: Path) -> Path:
             body += '<section epub:type="endnotes" class="notes"><h2>Notes</h2>'
             for nid in chapter['note_order']:
                 note = notes[nid]
-                body += f'<aside id="{nid}" epub:type="endnote" role="doc-endnote"><p>{note["number"]}.</p>'
+                body += f'<aside id="{nid}" epub:type="endnote" role="note"><p>{note["number"]}.</p>'
                 body += ''.join(_block(blocks[bid], blocks, assets) for bid in note['block_ids'])
                 body += ''.join(f'<a href="#{rid}" role="doc-backlink">↩</a> ' for rid in note['references']) + '</aside>'
             body += '</section>'

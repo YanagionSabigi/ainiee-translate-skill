@@ -109,6 +109,8 @@ def validate_middle(document: dict) -> None:
     if errors:
         where = '/'.join(map(str, errors[0].absolute_path))
         raise ValueError(f'Invalid docvortex.middle/2.0 structure at {where}')
+    if document['is_full_document'] is not True or not document['pages']:
+        raise ValueError('Partial or empty page extraction is not a full document bundle')
     page_ids = [p['page_idx'] for p in document['pages']]
     if page_ids != sorted(set(page_ids)):
         raise ValueError('Duplicate or unordered page indices')

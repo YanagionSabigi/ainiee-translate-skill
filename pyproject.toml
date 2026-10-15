@@ -24,7 +24,7 @@ testpaths = ["tests"]
 addopts = "-q"
 
 [tool.setuptools.package-data]
-ainiee_translate = ["*.html", "schemas/*.json", "schemas/*NOTICE*", "assets/*.css"]
+ainiee_translate = ["*.html", "_vendor/NOTICE", "schemas/*.json", "schemas/*NOTICE*", "assets/*.css"]
 
 [build-system]
 requires = ["setuptools"]

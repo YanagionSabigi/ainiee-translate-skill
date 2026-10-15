@@ -1,6 +1,6 @@
 {
   "name": "ainiee-translate",
-  "description": "Translate a novel/epub end-to-end on Claude Code itself, AiNiee-style: parse, build a locked glossary, translate chapter by chapter following rules (names preserved, title 3-way, term consistency), optional multi-agent parallel mode, write back and export.",
+  "description": "Agent-native EPUB/TXT and reviewed local MinerU PDF translation; structured PDF output to Markdown/EPUB; explicit BabelDOC compatibility.",
   "version": "1.14.0",
   "author": {
     "name": "Anji Xu",

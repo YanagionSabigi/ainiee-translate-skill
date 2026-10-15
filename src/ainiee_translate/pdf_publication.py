@@ -190,11 +190,22 @@ def compile_publication(book):
     for note in note_map.values():
         note['references'] = []
     note_bodies = {bid for note in note_map.values() for bid in note['block_ids']}
+    table_cells = {cell for block in book['blocks'] if block['kind'] == 'table' for row in block['rows'] for cell in row}
+    def reading_order(chapter_id):
+        for block in book['blocks']:
+            if block['chapter_id'] != chapter_id or block['id'] in note_bodies | table_cells:
+                continue
+            if block['kind'] == 'table':
+                for row in block['rows']:
+                    for cell in row:
+                        if cell not in blocks or blocks[cell]['kind'] != 'table-cell' or blocks[cell]['chapter_id'] != chapter_id:
+                            raise ValueError('Table cell must belong to its publication chapter')
+                        yield blocks[cell]
+            else:
+                yield block
     for chapter in chapters.values():
         numbered = {}
-        for block in book['blocks']:
-            if block['chapter_id'] != chapter['id'] or block['id'] in note_bodies:
-                continue
+        for block in reading_order(chapter['id']):
             for position, token in enumerate(TOKEN.findall(block.get('target_text', ''))):
                 node = block.get('inlines', {}).get(token, {})
                 if node.get('kind') != 'note':
@@ -235,4 +246,14 @@ def compile_publication(book):
         if placement.get('after') == chapter['id']:
             order.append(dict(id='visible-toc', kind='toc'))
     book['publication_order'] = order
+    reachable_assets = {entry['asset_id'] for entry in front}
+    def collect_assets(node):
+        if isinstance(node, dict):
+            if node.get('asset_id'):
+                reachable_assets.add(node['asset_id'])
+            for child in node.values(): collect_assets(child)
+        elif isinstance(node, list):
+            for child in node: collect_assets(child)
+    collect_assets(book['blocks'])
+    book['assets'] = [asset for asset in book['assets'] if asset['id'] in reachable_assets]
     return book

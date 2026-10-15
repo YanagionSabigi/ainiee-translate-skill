@@ -34,3 +34,12 @@ def test_legacy_cache_uses_legacy_backend(tmp_path, make_project, monkeypatch):
     monkeypatch.setattr(export, '_export_via_ainiee', lambda project, *args: written.append(project))
     export.export_project(p, str(tmp_path / 'out'), str(tmp_path))
     assert written == [p]
+
+
+def test_legacy_combined_formats_do_not_silently_drop_epub(tmp_path, make_project, monkeypatch):
+    from ainiee_translate import export
+    p = make_project(storage='legacy.pdf')
+    monkeypatch.setenv('AINIEE_REPO', str(tmp_path))
+    monkeypatch.setattr(export, '_export_via_ainiee', lambda *args: None)
+    with pytest.raises(ValueError, match='format|structure'):
+        export.export_project(p, str(tmp_path / 'out'), str(tmp_path), formats=['source', 'epub'])

@@ -62,6 +62,14 @@ def test_import_rejects_structure_without_assets(tmp_path):
     assert not (destination / 'manifest.json').exists()
 
 
+@pytest.mark.parametrize('change', [{'is_full_document': False}, {'pages': []}])
+def test_partial_or_empty_middle_never_completes(tmp_path, change):
+    api = adapter(); document = middle(); document.update(change)
+    with pytest.raises(ValueError, match='full|partial|page'):
+        api.import_bundle(bundle(tmp_path, document), tmp_path / 'raw')
+    assert not (tmp_path / 'raw/manifest.json').exists()
+
+
 @pytest.mark.parametrize('change', [
     {'schema': 'legacy'}, {'schema_version': '1.0'}, {'pages': 'wrong'},
     {'is_full_document': 'yes'}, {'metadata': {}},

@@ -7,7 +7,7 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.14.0-green.svg)](https://github.com/xuanji86/ainiee-translate-skill/releases)
 [![Python](https://img.shields.io/badge/python-%E2%89%A53.12-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-90%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-198%20passing-brightgreen.svg)](tests/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg)](https://claude.com/claude-code)
 [![Codex](https://img.shields.io/badge/Codex-compatible-333.svg)](skills/ainiee-translate/references/codex-tools.md)
 
@@ -46,7 +46,7 @@ python3 -m venv ~/.venvs/ainiee-translate
 ```
 
 自带 15 种格式：`epub` `txt` `md` `docx` `xlsx` `pptx` `csv` `srt` `vtt` `ass` `lrc` `po` `json` `rpy` `trans`。
-仅 **PDF 与 Windows Office 转换**未自包含——需要时设 `AINIEE_REPO` 回退到 AiNiee。
+新 PDF 默认通过独立本地 MinerU 环境准备并审阅结构，再复用翻译/润色缓存导出 Markdown/EPUB。详见 [PDF 工作流](skills/ainiee-translate/references/pdf_workflow.md) 与 [实测范围](docs/mineru-pdf-validation.md)。`AINIEE_REPO` 供显式 BabelDOC 和原有 Office 回退。
 
 ### 方式一：Claude Code 插件（推荐）
 
@@ -82,7 +82,7 @@ ln -s "$PWD/ainiee-translate-skill/skills/ainiee-translate" ~/.codex/skills/aini
 |---|---|---|
 | `SKILL_DIR` | ✅ | 技能安装目录 |
 | `AINIEE_PY` | ✅ | 上面 venv 的 python |
-| `AINIEE_REPO` | — | **可选**，仅 PDF / Windows Office 回退时需要 |
+| `AINIEE_REPO` | — | **可选**，显式 BabelDOC / Windows Office 回退 |
 | `AINIEE_TRANSLATE_HOME` | — | 模块根目录，默认 `~/.ainiee-translate` |
 
 自检：

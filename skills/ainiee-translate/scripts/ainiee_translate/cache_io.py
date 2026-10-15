@@ -81,6 +81,9 @@ def _set(project, text_index: int, text: str, status) -> bool:
     item = index_items(project).get(text_index)
     if item is None:
         return False
+    from .pdf_protection import check_item
+    if check_item(item.source_text, text, item.extra):
+        return False
     item.translated_text = text
     item.translation_status = status
     return True
@@ -146,6 +149,11 @@ def apply_writeback(cache_path: str, items: list[dict], status: int, get_text,
             item = idx.get(ti)
             if item is None:
                 res.rejected.append({"text_index": ti, "reason": "unknown_index"})
+                continue
+            from .pdf_protection import check_item
+            structure = check_item(item.source_text, text, item.extra)
+            if structure:
+                res.rejected.append({'text_index': ti, 'reason': ','.join(structure)})
                 continue
             if check is not None:
                 hard, soft = check(item, text)

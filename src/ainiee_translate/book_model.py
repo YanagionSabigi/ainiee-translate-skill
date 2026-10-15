@@ -33,6 +33,9 @@ def validate_book(book: BookDocument, *, require_translation=False) -> None:
         raise ValueError('IDs must be unique across book entities')
     units = []
     for block in book['blocks']:
+        if block.get('kind') in ('paragraph', 'heading', 'caption', 'table-cell', 'note'):
+            if not isinstance(block.get('source_text'), str) or not block['source_text'].strip() or not block.get('unit_id'):
+                raise ValueError('Textual block requires nonempty source text and a translation unit; record an explicit omission instead')
         if block['chapter_id'] not in chapters:
             raise ValueError('Block has unknown chapter')
         if block.get('asset_id') and block['asset_id'] not in assets:

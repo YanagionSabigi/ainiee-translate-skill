@@ -55,6 +55,16 @@ def test_unknown_semantic_block_requires_resolution(reviewed_work):
         api.normalize_book(reviewed_work)
 
 
+def test_textual_block_without_text_cannot_disappear_from_translation(reviewed_work):
+    api = model()
+    from ainiee_translate.mineru_local import write_json
+    path = reviewed_work / 'publication.review.json'; review = json.loads(path.read_text(encoding='utf8'))
+    review['blocks'][0].pop('source_text')
+    write_json(path, review)
+    with pytest.raises(ValueError, match='text|empty|omission'):
+        api.normalize_book(reviewed_work)
+
+
 def test_structure_review_does_not_finish_translation(reviewed_work):
     book = model().normalize_book(reviewed_work)
     assert book['schema'] == 'ainiee-book/1'

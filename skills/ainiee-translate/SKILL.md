@@ -1,6 +1,6 @@
 ---
 name: ainiee-translate
-description: Use when the user wants to translate a novel/epub end-to-end on the coding agent itself (Claude Code or Codex; no AiNiee app), AiNiee-style — parse, build a locked glossary, translate chapter by chapter following rules (names preserved, title 3-way, term consistency), write back and export. Triggers on "用 agent 翻译这本书", "agent 版 aniee 翻译", "把这本 epub 翻译了" and similar.
+description: Use when translating a novel, EPUB, TXT or PDF on the coding agent itself, resuming an AiNiee translation cache, or exporting reviewed PDF translations to Markdown/EPUB. Triggers on "用 agent 翻译这本书", "agent 版 aniee 翻译", "把这本 epub 翻译了" and PDF translation requests.
 ---
 
 # ainiee-translate 技能指南
@@ -24,7 +24,7 @@ parse → 构建锁定词汇表 → 逐章翻译（agent 按规则） → 写回
 
 ## 前置依赖与安装（重要）
 
-`parse`/`export` 现在**自包含**：解析/导出模块随技能打包在 `scripts/ainiee_translate/_vendor/` 下（改写自 AiNiee、剥离了其 App 框架），**无需克隆 AiNiee 仓库**，只需一个装了几个轻量库的 Python。自带格式：epub/txt/md/docx/xlsx/pptx/csv/srt/vtt/ass/lrc/po/json 系列等。**仅 PDF 与 Windows Office 转换未自包含**——要用时设 `AINIEE_REPO` 回退到 AiNiee。
+`parse`/`export` 的轻量格式随技能打包在 `scripts/ainiee_translate/_vendor/` 下（改写自 AiNiee、剥离其 App 框架），无需克隆 AiNiee App。自带 epub/txt/md/docx/xlsx/pptx/csv/srt/vtt/ass/lrc/po/json 系列。**新 PDF 默认本地 MinerU**，通过独立解释器调用；先阅读并执行 [PDF 工作流](references/pdf_workflow.md)。`AINIEE_REPO` 用于显式 BabelDOC 和原有 Windows Office 回退。
 
 **一次性准备：**
 
@@ -46,7 +46,7 @@ parse → 构建锁定词汇表 → 逐章翻译（agent 按规则） → 写回
    ```bash
    export SKILL_DIR=~/.claude/skills/ainiee-translate            # 本技能安装目录
    export AINIEE_PY=~/.venvs/ainiee-translate/bin/python         # 上面 venv 的 python
-   # 可选：仅翻 PDF / Office(Windows) 这类未自包含格式时，回退到 AiNiee：
+   # 可选：显式 BabelDOC / Office(Windows) 回退到 AiNiee：
    # export AINIEE_REPO=/path/to/AiNiee
    ```
 
@@ -56,7 +56,7 @@ parse → 构建锁定词汇表 → 逐章翻译（agent 按规则） → 写回
 PYTHONPATH="$SKILL_DIR/scripts" "$AINIEE_PY"
 ```
 
-> 管道脚本以 `ainiee_translate` 包形式打包在 `$SKILL_DIR/scripts/` 下，`PYTHONPATH` 指向该 `scripts` 目录即可 `-m ainiee_translate.<module>` 调用。`AINIEE_REPO` 只有 PDF/Office 回退才需要；不设也能跑自带格式。
+> 管道脚本以 `ainiee_translate` 包形式打包在 `$SKILL_DIR/scripts/` 下，`PYTHONPATH` 指向该 `scripts` 目录即可 `-m ainiee_translate.<module>` 调用。`AINIEE_REPO` 仅供显式旧 PDF 后端/Office 回退；新 PDF 按 PDF 工作流配置 MinerU。
 
 **自检命令（确认环境就绪）：**
 
@@ -80,6 +80,8 @@ mkdir -p "$WORK/work" "$WORK/out"
 
 ## 步骤 2：解析输入书籍
 
+**输入含 PDF 时先执行 [PDF 工作流](references/pdf_workflow.md)**：源绑定的页/区域审阅 → 本地提取 → 完整资源及结构审阅 → normalize → parse。未审阅或资源缺失时先解决准备阶段，失败保留诊断。旧 BabelDOC 缓存保持原导出路径；跨格式输出须另建有证据的结构项目。
+
 将 epub/txt 解析成 `cache.json`（AiNiee `CacheProject` 格式）：
 
 ```bash
@@ -91,7 +93,7 @@ mkdir -p "$WORK/work" "$WORK/out"
 
 - `--type`：`AutoType`（自动检测）、`Epub`、`Txt` 等，默认 `AutoType`。
 - 成功后打印：`parsed N items -> work/cache.json`。
-- **默认只译正文**：解析后立刻跑 `scope` 划定范围（见下「步骤 2.5」）。
+- **普通 EPUB 项目默认只译正文**：解析后跑 `scope` 划定范围（见下「步骤 2.5」）。新 PDF 的范围由提取前出版计划确定，保留已核验的序言、图注、注释及参考文献。
 - **epub 的行内排版会被保留**：源书的斜体/粗体（`<i>`、`<em>`、`<span class="italic">` 等各种写法）在 `source_text` 里统一成 `<i>…</i>` / `<b>…</b>` 标记，导出时按该段原文的实际写法还原。翻译时**原样保留标记**（见 `references/translation_rules.md`），不要再用『』手动标斜体。
 ---
 
@@ -157,6 +159,8 @@ v1.4.1 及更早版本的 epub 解析用 `soup.get_text(strip=True)` 抽文本�
 ---
 
 ## 步骤 3：构建并锁定词汇表
+
+项目提供 `术语表.md`、`schemas/glossary.locked.schema.json` 时，先按该 Schema 生成并验证 locked JSON，成功后才加载/翻译；通过 `AINIEE_GLOSSARY_SCHEMA` 启用项目级加载校验。读取并应用项目 `style.md`。个人 Schema 与风格只约束对应项目，操作见 [PDF 工作流](references/pdf_workflow.md#translate-polish-and-verify)。
 
 从 AiNiee 公共术语表（`prompt_dictionary_data`）和可选的项目分析缓存（`analysis_v1`）生成锁定表：
 
@@ -285,7 +289,7 @@ v1.4.1 及更早版本的 epub 解析用 `soup.get_text(strip=True)` 抽文本�
 ```
 
 - 写回前自动创建带时间戳的备份 `cache.json.bak.YYYYMMDD_HHMMSS`（默认只保留最近 10 个，`AINIEE_BACKUP_KEEP` 可调，0 = 不清理；手工备份如 `cache.json.pre_xxx` 不受影响）；写入是原子的（临时文件 + rename），并持有 `cache.json.lock` 文件锁。
-- **写回闸门**：空译文、`<i>`/`<b>` 数量与源文不符、未知 `text_index` 一律拒收并逐条列出，其余照写；退出码 1 表示有拒收。项目规则允许标记数变化（如中译书名从 `<i>` 改《》）时加 `--allow-tag-mismatch`；`--force` 只保留「未知 index」这一条拒收。同时统计风格警告（半角标点、「」、长度比异常等，见 `audit`）。
+- **写回闸门**：空译文、`<i>`/`<b>` 数量与源文不符、未知 `text_index` 拒收并逐条列出，退出码 1 表示有拒收。项目允许 i/b 变化时可加 `--allow-tag-mismatch`。结构 PDF 的 `⟦AT:kind:id⟧` 标记须原样、各一次、原序保留；翻译与润色写回均检查，`--force` 和 i/b 例外均不能绕过。普通旧项目的 force 行为沿用原规则。批次中的章节、图注和注释元数据是结构上下文，参考批次只读；主控统一写 cache。同时统计风格警告（见 `audit`）。
 - 可以一次给多个文件，也接受 **JSONL**（每行一个 `{"text_index","translated_text"}`）：`batch write cache.json t1.json t2.jsonl …`——一次备份、一次加载、一次保存。
 - 成功后打印：`applied N of M`。重复执行步骤 5a → 5c 直到 `batch read` 返回空数组（`[]`）为止。
 
@@ -437,7 +441,7 @@ Consistency auditor；主控只跑机械闸门：`review pre`（`offending` 恰�
 export SKILL_DIR=~/.claude/skills/ainiee-translate
 export AINIEE_PY=~/.venvs/ainiee-translate/bin/python   # venv with: msgspec bs4 lxml rich openpyxl polib python-pptx chardet
 export WORK=~/my-book
-# 可选：export AINIEE_REPO=/path/to/AiNiee   # 仅 PDF / Office 回退
+# 可选：export AINIEE_REPO=/path/to/AiNiee   # 显式 BabelDOC / Office 回退
 
 # 命令前缀
 PFX="PYTHONPATH=$SKILL_DIR/scripts $AINIEE_PY"
@@ -498,7 +502,7 @@ $PFX -m ainiee_translate.review rules|blind|hints|pre|segs [--tier]|final|merge|
 ## 附录 B：常见问题
 
 **Q: `parse` / `import` 报 `ModuleNotFoundError`（bs4 / lxml / openpyxl / polib / pptx）？**
-A: 缺依赖。在 `$AINIEE_PY` 的 venv 里 `pip install msgspec beautifulsoup4 lxml rich openpyxl polib python-pptx chardet`，并确认 `PYTHONPATH` 指向 `$SKILL_DIR/scripts`。不再需要 `AINIEE_REPO`（仅 PDF/Office 回退才设）。
+A: 缺依赖。在 `$AINIEE_PY` 的 venv 里 `pip install msgspec beautifulsoup4 lxml rich openpyxl polib python-pptx chardet`，并确认 `PYTHONPATH` 指向 `$SKILL_DIR/scripts`。不再需要 `AINIEE_REPO`（显式 BabelDOC/Office 回退才设）。
 
 **Q: `batch read` 返回空数组 `[]`？**
 A: 所有段落均已翻译完毕（`translation_status = TRANSLATED`），可以进行导出步骤。
@@ -537,7 +541,7 @@ A: verify 只执行**锁定表里登记过的**人名，且无法识别张冠李
 | `progress [--line\|--json]` | 进度面板：全书进度 + 每个并行组的 running/stalled/ready/needs_fix/written |
 | `review <起-止段号> [--target 140]` | 对抗性审核：Reviewer 找问题 → 机械闸门 → Challenger 否决 → A/B 自动写回、C/D 给用户过目（去 AI 味 + 抓误译）|
 
-命令脚本路径用 `${CLAUDE_PLUGIN_ROOT}/skills/ainiee-translate/scripts`，并需用户设好 `AINIEE_PY`（`AINIEE_REPO` 仅 PDF/Office 回退才需要）。
+命令脚本路径用 `${CLAUDE_PLUGIN_ROOT}/skills/ainiee-translate/scripts`，并需用户设好 `AINIEE_PY`（`AINIEE_REPO` 显式 BabelDOC/Office 回退才需要）。
 
 ---
 

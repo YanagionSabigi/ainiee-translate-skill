@@ -24,7 +24,7 @@ def export_project(project, output_path: str, input_path: str, config: dict | No
         raise ValueError('Unknown export format')
     structured = {sp: cf for sp, cf in project.files.items() if cf.extra.get('ainiee_pdf', {}).get('backend') == 'mineru'}
     ordinary = {sp: cf for sp, cf in project.files.items() if sp not in structured}
-    if ordinary and 'source' not in formats:
+    if ordinary and any(fmt != 'source' for fmt in formats):
         raise ValueError('Cross-format export requires reviewed PDF book structure; use --format source for legacy projects')
     for storage, cf in structured.items():
         from .pdf_cache import apply_cache_to_book
@@ -45,6 +45,9 @@ def export_project(project, output_path: str, input_path: str, config: dict | No
             else:
                 from .book_epub import export_epub
                 export_epub(target, out / ('book.draft.epub' if target.get('diagnostic_draft') else 'book.epub'))
+        if target.get('diagnostic_draft'):
+            from .mineru_local import write_json
+            write_json(out / 'missing-units.json', target['missing_units'])
     if not ordinary:
         return
     project = copy.copy(project)

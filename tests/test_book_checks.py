@@ -1,5 +1,7 @@
 import importlib
 import zipfile
+import os
+from pathlib import Path
 
 import pytest
 
@@ -18,6 +20,15 @@ def test_unavailable_epubcheck_is_not_passed(tmp_path, translated_book):
     result = api.check_epub(path, epubcheck_jar=tmp_path / 'missing.jar')
     assert result['structure']['status'] == 'passed'
     assert result['epubcheck']['status'] == 'unavailable'
+
+
+@pytest.mark.skipif(not os.environ.get('EPUBCHECK_JAR'), reason='official EPUBCheck is optional')
+def test_official_epubcheck_accepts_published_notes_and_math(tmp_path, translated_book):
+    api = checker()
+    from ainiee_translate.book_epub import export_epub
+    path = export_epub(translated_book, tmp_path / 'official.epub')
+    result = api.check_epub(path, epubcheck_jar=Path(os.environ['EPUBCHECK_JAR']))
+    assert result['epubcheck']['status'] == 'passed', result
 
 
 @pytest.mark.parametrize('mutation', ['broken_link', 'duplicate_id', 'absolute_link', 'duplicate_member', 'missing_asset'])

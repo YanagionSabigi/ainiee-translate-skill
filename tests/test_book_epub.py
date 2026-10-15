@@ -84,6 +84,31 @@ def test_markdown_shares_reviewed_publication_order(tmp_path, publication_book):
     assert text.index('assets/cover.png') < text.index('assets/back-cover.png') < text.index('前言正文') < text.index('[第一章](#ch1)') < text.index('# 第一章')
 
 
+def test_table_notes_follow_reading_order_not_cell_definition_order(tmp_path, translated_book):
+    book = copy.deepcopy(translated_book)
+    cell = next(b for b in book['blocks'] if b['id'] == 'cell1')
+    token = '⟦AT:note:table⟧'
+    cell.update(source_text=token, target_text=token, protected_tokens=[token], inlines={token: {'kind': 'note', 'note_id': 'table-note'}})
+    book['blocks'].append({'id': 'table-note-body', 'kind': 'paragraph', 'chapter_id': 'ch1', 'unit_id': 'utablenote', 'source_text': 'Table note', 'target_text': '表格注释'})
+    book['notes'].append({'id': 'table-note', 'chapter_id': 'ch1', 'block_ids': ['table-note-body'], 'original_label': 'a', 'association_evidence': 'self-authored'})
+    table = next(b for b in book['blocks'] if b['id'] == 'table1'); book['blocks'].remove(table); book['blocks'].insert(0, table)
+    path = publisher().export_epub(book, tmp_path / 'book.epub')
+    with zipfile.ZipFile(path) as z:
+        root = etree.fromstring(z.read('EPUB/ch1.xhtml'))
+        refs = root.xpath('//*[@role="doc-noteref"]')
+        assert [''.join(r.itertext()) for r in refs] == ['1', '2', '2']
+
+
+def test_only_reachable_publication_assets_enter_epub(tmp_path, translated_book):
+    from ainiee_translate.mineru_local import sha256
+    private = tmp_path / 'private-review.txt'; private.write_text('UNPUBLISHED REVIEW CONTENT')
+    translated_book['assets'].append({'id': 'unreferenced-review', 'path': private.name, 'sha256': sha256(private), 'media_type': 'text/plain'})
+    path = publisher().export_epub(translated_book, tmp_path / 'book.epub')
+    with zipfile.ZipFile(path) as z:
+        assert not any('unreferenced-review' in name for name in z.namelist())
+        assert b'UNPUBLISHED REVIEW CONTENT' not in b''.join(z.read(name) for name in z.namelist())
+
+
 @pytest.mark.parametrize('mutation', ['missing_bookmark', 'unresolved_note', 'orphan_note', 'duplicate_id', 'missing_asset', 'bad_toc_position'])
 def test_unresolved_structure_cannot_publish(tmp_path, translated_book, mutation):
     api = publisher(); book = copy.deepcopy(translated_book)
