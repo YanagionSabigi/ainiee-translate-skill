@@ -1,6 +1,8 @@
 ---
 name: ainiee-translate
 description: Use when translating a novel, EPUB, TXT or PDF on the coding agent itself, resuming an AiNiee translation cache, or exporting reviewed PDF translations to Markdown/EPUB or LaTeX/Typst book templates. Triggers on "用 agent 翻译这本书", "agent 版 aniee 翻译", "把这本 epub 翻译了" and PDF translation requests.
+metadata:
+  version: "2.0.0-rc.1"
 ---
 
 # ainiee-translate 技能指南

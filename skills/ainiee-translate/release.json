@@ -1,0 +1,9 @@
+{
+  "schema": "skill-release/1",
+  "name": "ainiee-translate",
+  "version": "2.0.0-rc.1",
+  "tag": "v2.0.0-rc.1",
+  "repository": "https://github.com/YanagionSabigi/ainiee-translate-skill",
+  "update_branch": "release",
+  "skill_path": "skills/ainiee-translate"
+}

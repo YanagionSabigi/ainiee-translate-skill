@@ -5,9 +5,9 @@
 **Agent 原生的长篇翻译管线** —— 让编码 agent 本身当翻译引擎，端到端译完一本书。
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.14.0-green.svg)](https://github.com/xuanji86/ainiee-translate-skill/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0--rc.1-orange.svg)](https://github.com/YanagionSabigi/ainiee-translate-skill/releases)
 [![Python](https://img.shields.io/badge/python-%E2%89%A53.12-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-166%20passing-brightgreen.svg)](测试/)
+[![Tests](https://img.shields.io/badge/tests-168%20passing-brightgreen.svg)](测试/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg)](https://claude.com/claude-code)
 [![Codex](https://img.shields.io/badge/Codex-compatible-333.svg)](skills/ainiee-translate/references/codex-tools.md)
 
@@ -16,6 +16,7 @@
 </div>
 
 本 fork 的重构测试入口：[克隆、安装与本地配置](docs/fork-testing.md)。测试分支为 `refactor/pdf-epub-first`，暂未向上游提交 PR。
+发布包和 CC Switch 更新源见 [发布与安装](docs/releases.md)。
 
 ---
 
