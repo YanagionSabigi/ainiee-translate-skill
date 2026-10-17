@@ -1,12 +1,12 @@
 {
   "name": "ainiee-translate",
-  "description": "Translate a novel/epub end-to-end on Claude Code itself, AiNiee-style: parse, build a locked glossary, translate chapter by chapter following rules (names preserved, title 3-way, term consistency), optional multi-agent parallel mode, write back and export.",
+  "description": "Agent-native EPUB/TXT translation and reviewed local MinerU PDF translation through the shared pdf-to-epub publisher.",
   "version": "1.14.0",
   "author": {
     "name": "Anji Xu",
     "email": "xuanji86@gmail.com"
   },
   "homepage": "https://github.com/xuanji86/ainiee-translate-skill",
-  "repository": "https://github.com/xuanji86/ainiee-translate-skill",
+  "repository": "https://github.com/YanagionSabigi/ainiee-translate-skill",
   "license": "AGPL-3.0-only"
 }

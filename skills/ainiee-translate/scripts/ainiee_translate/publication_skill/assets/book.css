@@ -1,0 +1,44 @@
+html { font-size: 100%; }
+body { font-family: serif; line-height: 1.55; margin: 0 5%; overflow-wrap: break-word; }
+.chapter { break-before: page; page-break-before: always; }
+h1 { font-size: 1.9em; line-height: 1.2; margin: 1.2em 0 1em; }
+h2 { font-size: 1.4em; margin: 1.4em 0 .6em; break-after: avoid; page-break-after: avoid; }
+h3,h4,h5,h6 { font-size: 1.15em; margin: 1.1em 0 .5em; }
+p { margin: .65em 0; text-indent: 1.5em; }
+blockquote { margin: 1em 1.5em; }
+blockquote p, .caption, .notes p, .no-indent { text-indent: 0; }
+.verse { white-space: pre-wrap; text-indent: 0; }
+img { max-width: 100%; height: auto; object-fit: contain; }
+figure { margin: 1em 0; text-align: center; break-inside: avoid; }
+figcaption, .caption { font-size: .875em; text-align: center; margin-top: .4em; }
+.formula { text-align: center; margin: 1em 0; }
+.formula img { max-width: 100%; max-height: 18em; width: auto; }
+.formula-inline { height: 1.15em; width: auto; max-width: 100%; vertical-align: -.18em; }
+.equation-label { margin-left: 1em; white-space: nowrap; }
+.underline { text-decoration: underline; text-underline-position: under; }
+/* Searchable text is unchanged; underline is the compatibility fallback. */
+.emphasis-dot { text-decoration: underline; }
+@supports (text-emphasis-style: filled dot) {
+  .emphasis-dot { text-decoration: none; text-emphasis-style: filled dot; text-emphasis-position: under right; }
+}
+sup,sub { font-size: .75em; line-height: 0; }
+.noteref { font-size: .75em; vertical-align: super; line-height: 0; }
+.noteref-baseline { font-size: 1em; vertical-align: baseline; line-height: inherit; }
+.notes { margin-top: 2em; border-top: thin solid; padding-top: .7em; }
+.note { font-size: .9em; margin-bottom: 1em; }
+.backlink { margin-right: .5em; }
+table { border-collapse: collapse; max-width: 100%; font-size: .95em; }
+th,td { border: thin solid; padding: .3em; overflow-wrap: anywhere; }
+ol,ul { padding-left: 1.6em; }
+details { margin: .6em 0; }
+summary { cursor: pointer; }
+a { text-decoration: underline; }
+.visible-toc { margin: 1.5em 0; }
+.toc-chapter { margin: .8em 0; }
+.toc-sections { margin: .4em 0 .4em 1.5em; }
+.toc-section { margin: .3em 0; }
+nav ol { list-style: none; }
+.packaging-image { margin: 0; text-align: center; }
+.packaging-image img { width: 100%; height: auto; max-height: 100vh; object-fit: contain; }
+.backlink { font-size: .75em; font-weight: normal; white-space: nowrap; }
+.backlinks { text-indent: 0; margin: .2em 0; }

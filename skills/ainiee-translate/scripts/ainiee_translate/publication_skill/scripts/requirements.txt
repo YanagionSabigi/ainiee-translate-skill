@@ -1,0 +1,3 @@
+PyMuPDF>=1.24
+# Optional for explicit scan deskew:
+Pillow>=10

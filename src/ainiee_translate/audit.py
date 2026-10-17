@@ -22,7 +22,7 @@ _MARK = re.compile(r"</?[ib]>")
 _LATIN_WORD = re.compile(r"[A-Za-z']+")
 _HAN = re.compile(r"[一-鿿]")
 
-HARD_KINDS = ("empty", "tag_mismatch")
+HARD_KINDS = ("empty", "tag_mismatch", "structure_tokens", "invalid_source_tokens", "source_token_mismatch")
 
 
 def mark_mismatch(src: str, tgt: str) -> list[str]:
@@ -78,8 +78,10 @@ def soft_checks(src: str, tgt: str) -> list[str]:
     return w
 
 
-def lint_pair(src: str, tgt: str, allow_tag_mismatch: bool = False) -> tuple[list[str], list[str]]:
+def lint_pair(src: str, tgt: str, allow_tag_mismatch: bool = False, *, extra=None) -> tuple[list[str], list[str]]:
+    from .pdf_protection import check_item
     hard = hard_checks(src, tgt, allow_tag_mismatch)
+    hard += check_item(src, tgt, extra)
     return hard, ([] if hard == ["empty"] else soft_checks(src, tgt))
 
 
@@ -92,7 +94,7 @@ def audit_items(items: list[dict], allow_tag_mismatch: bool = False,
         if it.get("translation_status") not in statuses:
             continue
         s, t = it.get("source_text") or "", it.get("translated_text") or ""
-        hard, soft = lint_pair(s, t, allow_tag_mismatch)
+        hard, soft = lint_pair(s, t, allow_tag_mismatch, extra=it.get('extra'))
         for c in hard + soft:
             row = out.setdefault(c, {"count": 0, "segments": [], "samples": []})
             row["count"] += 1
@@ -113,7 +115,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
     proj = cache_io.load_cache(a.cache)
     items = [{"text_index": it.text_index, "source_text": it.source_text,
-              "translated_text": it.translated_text, "translation_status": it.translation_status}
+              "translated_text": it.translated_text, "translation_status": it.translation_status, 'extra': it.extra}
              for it in cache_io.iter_items(proj)]
     rep = audit_items(items, a.allow_tag_mismatch, sample=a.samples)
     if a.out:

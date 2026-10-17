@@ -1,0 +1,94 @@
+% Rose Pine — book headings, headers, TOC, cover (after theme.tex).
+
+\usepackage{titlesec}
+\titleformat{\part}[display]
+  {\centering\normalfont\LARGE\bfseries\color{chaptercolor}}
+  {\partname\ \thepart}{10pt}
+  {\LARGE}
+\titleformat{\chapter}[display]
+  {\normalfont\LARGE\bfseries\color{chaptercolor}}
+  {\chaptertitlename\ \thechapter}{10pt}
+  {\LARGE\bfseries\color{chaptercolor}}
+  [\vspace{-4pt}{\color{coveraccent}\rule{\textwidth}{1.5pt}}]
+\titleformat{\section}
+  {\normalfont\large\bfseries\color{sectioncolor}}
+  {\thesection}{0.8em}{}
+  [\vspace{-4pt}{\color{rulecolor}\rule{0.28\textwidth}{0.8pt}}]
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries\color{subsectioncolor}}
+  {\thesubsection}{0.8em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{subsectioncolor}}
+  {\thesubsubsection}{0.8em}{}
+\titlespacing*{\chapter}{0pt}{16pt}{10pt}
+\titlespacing*{\section}{0pt}{10pt}{5pt}
+\titlespacing*{\subsection}{0pt}{8pt}{3pt}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{rpsubtle}\nouppercase{\leftmark}}
+\fancyhead[R]{\small\color{rpsubtle}\nouppercase{\rightmark}}
+\fancyfoot[C]{\color{rpmuted}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{rulecolor}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrulewidth}{0pt}
+
+\usepackage{titletoc}
+\titlecontents{chapter}[0pt]
+  {\addvspace{6pt}\bfseries\color{chaptercolor}}
+  {\thecontentslabel\quad}{}
+  {\color{rpmuted}\titlerule*[0.5pc]{.}\contentspage}
+\titlecontents{section}[1.5em]
+  {\color{sectioncolor}}
+  {\thecontentslabel\quad}{}
+  {\color{rpmuted}\titlerule*[0.5pc]{.}\contentspage}
+\titlecontents{subsection}[3em]
+  {\color{rpsubtle}\small}
+  {\thecontentslabel\quad}{}
+  {\color{rpmuted}\titlerule*[0.5pc]{.}\contentspage}
+
+\setcounter{tocdepth}{2}
+
+% Override in main.tex before \makecover
+\newcommand{\CoverTitle}{Title}
+\newcommand{\CoverSubtitle}{Subtitle}
+\newcommand{\CoverAuthors}{Author}
+\newcommand{\CoverTag}{Edition}
+
+\newcommand{\makecover}{%
+  \begin{titlepage}
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[coverbg] (current page.south west) rectangle (current page.north east);
+      \draw[coveraccent, line width=1.5pt]
+        ([yshift=-2.5cm]current page.north west) -- ([yshift=-2.5cm]current page.north east);
+      \draw[coverpine, line width=1.5pt]
+        ([yshift=2.5cm]current page.south west) -- ([yshift=2.5cm]current page.south east);
+      \node[regular polygon, regular polygon sides=4, draw=coveraccent, line width=1pt,
+            inner sep=0pt, minimum size=10pt, rotate=45]
+        at ([yshift=-2.5cm]current page.north) {};
+      \node[regular polygon, regular polygon sides=4, draw=coverpine, line width=1pt,
+            inner sep=0pt, minimum size=10pt, rotate=45]
+        at ([yshift=2.5cm]current page.south) {};
+      \node[anchor=center, font=\fontsize{26}{32}\selectfont\bfseries\color{covertxt},
+            text width=0.82\paperwidth, align=center]
+        at ([yshift=2.8cm]current page.center) {\CoverTitle};
+      \node[anchor=center, font=\fontsize{14}{20}\selectfont\color{coveriris},
+            text width=0.78\paperwidth, align=center]
+        at ([yshift=0.9cm]current page.center) {\CoverSubtitle};
+      \draw[coveraccent, line width=1pt]
+        ([xshift=-3cm, yshift=-0.2cm]current page.center) --
+        ([xshift=3cm, yshift=-0.2cm]current page.center);
+      \node[regular polygon, regular polygon sides=4, draw=coveraccent, fill=coverbg,
+            line width=0.8pt, inner sep=0pt, minimum size=6pt, rotate=45]
+        at ([yshift=-0.2cm]current page.center) {};
+      \node[anchor=center, font=\large\color{coverpine}]
+        at ([yshift=-1.1cm]current page.center) {\CoverTag};
+      \node[anchor=center, font=\normalsize\color{rpsubtle},
+            text width=0.8\paperwidth, align=center]
+        at ([yshift=-2.2cm]current page.center) {\CoverAuthors};
+      \node[anchor=south, font=\footnotesize\color{rpmuted}]
+        at ([yshift=3.2cm]current page.south) {\today};
+    \end{tikzpicture}
+  \end{titlepage}
+}

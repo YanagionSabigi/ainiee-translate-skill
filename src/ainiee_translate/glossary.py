@@ -10,6 +10,7 @@ import argparse
 import json
 import re
 import sys
+import os
 
 from . import glossary_seed, glossary_clean
 from .glossary_clean import _HON_BARE
@@ -45,9 +46,18 @@ def write_locked(locked: dict, path: str) -> None:
         json.dump(locked, f, ensure_ascii=False, indent=2)
 
 
-def load_locked(path: str) -> dict:
+def load_locked(path: str, *, schema_path: str | None = None) -> dict:
     with open(path, encoding="utf-8") as f:
-        return json.load(f)
+        locked = json.load(f)
+    schema_path = schema_path or os.environ.get('AINIEE_GLOSSARY_SCHEMA')
+    if schema_path:
+        from jsonschema import Draft202012Validator
+        with open(schema_path, encoding='utf8') as f:
+            schema = json.load(f)
+        Draft202012Validator.check_schema(schema)
+        if list(Draft202012Validator(schema).iter_errors(locked)):
+            raise ValueError('Locked glossary failed project JSON Schema validation')
+    return locked
 
 
 # --------------------------------------------------------------- filter ----

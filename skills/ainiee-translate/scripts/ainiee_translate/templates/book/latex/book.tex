@@ -1,0 +1,25 @@
+% Generated from a reviewed AiNiee target book. Compile locally with XeLaTeX.
+\documentclass[UTF8,fontset=none,oneside,12pt]{ctexbook}
+\setmainfont{@@font_latin@@}[Ligatures=TeX,Scale=1.05]
+\setCJKmainfont{@@font_cjk@@}[Scale=1.06,AutoFakeBold=2,AutoFakeSlant=.17]
+\setmonofont{@@font_mono@@}
+\setCJKmonofont{@@font_cjk@@}[Scale=1.06]
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip=0pt plus 1pt minus .1pt
+\input{rosepine/theme.tex}
+\input{rosepine/theme-book.tex}
+\usepackage{needspace}
+\usepackage{fvextra}
+\geometry{@@page_size@@,margin=@@margin_mm@@mm,headheight=32pt}
+\AtBeginDocument{\fontsize{@@font_size@@}{\dimexpr @@font_size@@pt*13/10\relax}\selectfont}
+\renewcommand{\CoverTitle}{@@title@@}
+\renewcommand{\CoverSubtitle}{@@translator@@}
+\renewcommand{\CoverAuthors}{@@author@@}
+\renewcommand{\CoverTag}{@@language@@}
+\hypersetup{pdftitle={@@title@@},pdfauthor={@@author@@}}
+\begin{document}
+@@page_numbering@@
+@@title_page@@
+@@draft@@
+@@body@@
+\end{document}

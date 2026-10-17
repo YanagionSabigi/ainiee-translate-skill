@@ -7,13 +7,15 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.14.0-green.svg)](https://github.com/xuanji86/ainiee-translate-skill/releases)
 [![Python](https://img.shields.io/badge/python-%E2%89%A53.12-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-90%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-166%20passing-brightgreen.svg)](测试/)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2.svg)](https://claude.com/claude-code)
 [![Codex](https://img.shields.io/badge/Codex-compatible-333.svg)](skills/ainiee-translate/references/codex-tools.md)
 
 [安装](#安装) · [快速开始](#快速开始) · [工作原理](#工作原理) · [命令](#命令) · [模块](#模块) · [质量闭环](#质量闭环)
 
 </div>
+
+本 fork 的重构测试入口：[克隆、安装与本地配置](docs/fork-testing.md)。测试分支为 `refactor/pdf-epub-first`，暂未向上游提交 PR。
 
 ---
 
@@ -46,7 +48,7 @@ python3 -m venv ~/.venvs/ainiee-translate
 ```
 
 自带 15 种格式：`epub` `txt` `md` `docx` `xlsx` `pptx` `csv` `srt` `vtt` `ass` `lrc` `po` `json` `rpy` `trans`。
-仅 **PDF 与 Windows Office 转换**未自包含——需要时设 `AINIEE_REPO` 回退到 AiNiee。
+新 PDF 默认通过独立本地 MinerU 环境准备并审阅结构，再复用翻译/润色缓存导出 Markdown/EPUB。可选书籍模板还可生成 LaTeX、Typst 源码及各自 PDF。详见 [PDF 工作流](skills/ainiee-translate/references/pdf_workflow.md)、[书籍模板](skills/ainiee-translate/references/book_templates.md) 与 [核心实测范围](docs/mineru-pdf-validation.md)。`AINIEE_REPO` 仅供非 PDF Office 回退。PDF 检查、提取、书籍结构与 EPUB 出版统一由工作区 pdf-to-epub 开发副本执行；初翻后必须有独立上下文对照原 PDF 的校对记录。
 
 ### 方式一：Claude Code 插件（推荐）
 
@@ -82,7 +84,7 @@ ln -s "$PWD/ainiee-translate-skill/skills/ainiee-translate" ~/.codex/skills/aini
 |---|---|---|
 | `SKILL_DIR` | ✅ | 技能安装目录 |
 | `AINIEE_PY` | ✅ | 上面 venv 的 python |
-| `AINIEE_REPO` | — | **可选**，仅 PDF / Windows Office 回退时需要 |
+| `AINIEE_REPO` | — | **可选**，非 PDF Windows Office 回退 |
 | `AINIEE_TRANSLATE_HOME` | — | 模块根目录，默认 `~/.ainiee-translate` |
 
 自检：
@@ -345,11 +347,11 @@ v1.4.1 及更早的 epub 解析用 `soup.get_text(strip=True)`，会丢掉行内
 ```bash
 git clone https://github.com/xuanji86/ainiee-translate-skill.git
 cd ainiee-translate-skill
-PYTHONPATH=src python -m pytest -q      # 90 tests
-./build.sh                              # src/ → skills/ 同步（含漂移守卫）
+PYTHONPATH=src python -m pytest 测试 -q
+python build.py                       # 规范源码与出版技能 → bundle，含漂移校验
 ```
 
-**布局**：`src/ainiee_translate/` 是**唯一源**；`build.sh` 用 rsync 同步进
+**布局**：`src/ainiee_translate/` 是**唯一源**；`build.py` 同步（含同级出版技能）进
 `skills/ainiee-translate/scripts/` 并校验无漂移。`SKILL.md` 与 `references/` 直接住在
 `skills/ainiee-translate/` 下，不经同步。改完 `src/` 后**务必跑一次** `./build.sh`。
 

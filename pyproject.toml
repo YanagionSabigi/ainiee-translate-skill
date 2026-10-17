@@ -1,6 +1,6 @@
 [project]
 name = "ainiee-translate"
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">=3.12"
 license = "AGPL-3.0-only"
 # Self-contained parse/export (vendored AiNiee readers/writers under _vendor/).
@@ -16,12 +16,16 @@ dependencies = [
     "chardet",          # optional encoding sniff (txt/srt/...); graceful if absent
 ]
 
+[project.optional-dependencies]
+pdf = ["pymupdf>=1.24", "jsonschema>=4.22"]
+
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["测试"]
+pythonpath = ["src"]
 addopts = "-q"
 
 [tool.setuptools.package-data]
-ainiee_translate = ["*.html"]
+ainiee_translate = ["*.html", "_vendor/NOTICE", "schemas/*.json", "schemas/*NOTICE*", "assets/*.css", "templates/book/*.yaml", "templates/book/*/*", "templates/book/latex/rosepine/*"]
 
 [build-system]
 requires = ["setuptools"]

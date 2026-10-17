@@ -65,7 +65,7 @@ def test_clean_characters_does_not_merge_two_people_sharing_a_surname():
 
 def test_glossary_cli_legacy_build_still_works(tmp_path):
     import os
-    fix = os.path.join(os.path.dirname(__file__), "fixtures")
+    fix = os.path.join(os.path.dirname(os.path.dirname(__file__)), "夹具")
     out = tmp_path / "g.json"
     glossary.main(["--config", os.path.join(fix, "config.json"), "--out", str(out)])
     assert json.loads(out.read_text(encoding="utf-8"))["terms"]

@@ -81,9 +81,21 @@ def _set(project, text_index: int, text: str, status) -> bool:
     item = index_items(project).get(text_index)
     if item is None:
         return False
+    from .pdf_protection import check_item
+    if check_item(item.source_text, text, item.extra):
+        return False
+    _invalidate_changed_proof(item, text)
     item.translated_text = text
     item.translation_status = status
     return True
+
+
+def _invalidate_changed_proof(item, text):
+    """Source verification survives a language edit; its target proof does not."""
+    meta = item.extra.get('ainiee_pdf', {})
+    if text != item.translated_text and meta.get('proofreading'):
+        meta.setdefault('proofreading_history', []).append(
+            {'reason': 'translation_changed', 'record': meta.pop('proofreading')})
 
 
 def set_translation(project, text_index: int, translated_text: str) -> bool:
@@ -100,13 +112,32 @@ def set_polish(project, text_index: int, polished_text: str) -> bool:
 def locked(cache_path: str):
     """Exclusive advisory lock on <cache>.lock for the duration of a write.
     A second writer blocks until the first finishes instead of racing on the
-    read-modify-write. No-op where fcntl is unavailable (Windows)."""
+    read-modify-write. The persistent sibling file is shared by both platforms."""
     try:
         import fcntl
-    except ImportError:          # pragma: no cover
-        yield
+    except ImportError:          # Windows
+        import errno
+        import msvcrt
+        import time
+        # Windows permits a byte-range lock beyond EOF. Do not truncate or
+        # replace this file: all writers must continue locking the same inode.
+        with open(os.fspath(cache_path) + '.lock', 'a+b') as fh:
+            while True:
+                fh.seek(0)
+                try:
+                    msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError as exc:
+                    if exc.errno not in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):
+                        raise
+                    time.sleep(.05)
+            try:
+                yield
+            finally:
+                fh.seek(0)
+                msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
         return
-    with open(cache_path + ".lock", "w") as fh:
+    with open(os.fspath(cache_path) + ".lock", "a+b") as fh:
         fcntl.flock(fh, fcntl.LOCK_EX)
         try:
             yield
@@ -147,6 +178,11 @@ def apply_writeback(cache_path: str, items: list[dict], status: int, get_text,
             if item is None:
                 res.rejected.append({"text_index": ti, "reason": "unknown_index"})
                 continue
+            from .pdf_protection import check_item
+            structure = check_item(item.source_text, text, item.extra)
+            if structure:
+                res.rejected.append({'text_index': ti, 'reason': ','.join(structure)})
+                continue
             if check is not None:
                 hard, soft = check(item, text)
                 if hard and not force:
@@ -154,6 +190,7 @@ def apply_writeback(cache_path: str, items: list[dict], status: int, get_text,
                     continue
                 for c in soft:
                     res.warnings[c] = res.warnings.get(c, 0) + 1
+            _invalidate_changed_proof(item, text)
             item.translated_text = text
             item.translation_status = status
             res.applied += 1

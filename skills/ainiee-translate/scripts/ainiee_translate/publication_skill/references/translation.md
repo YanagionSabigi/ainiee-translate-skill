@@ -1,0 +1,26 @@
+# Translation publication contract
+
+`epub-book/1` remains the original-language publication format. Translation uses `epub-book/2`, preserving `chapters[].blocks[]`, `notes[]`, assets and provenance. The extra `units` index names each human-readable JSON leaf by stable owner ID and relative slot. `path` locates the current leaf; array positions and identical sentences never establish identity. Units retain source text/hash/revision, translation policy, source location and source-verification evidence. Book metadata needs `metadata_provenance` when it is translated.
+
+`prepare --work WORK` resolves the minimum structure in `review.json` without asserting source verification, preserves `book.minimum.json`, then creates `book.source.json` and content-addressed `source-revisions/`. Every raw line and semantic block still needs structural accounting. Raw extraction stays immutable. A new project needs an identified cover, original contents position and bookmark mapping before formal publication; unresolved structure may remain during initial translation.
+
+Entities register chapter/section/figure/table/formula/note/bibliography identities without copying content. References identify each occurrence by `ref_id`, JSON path, type (`note`, `crossref`, `citation`), target IDs, status and source evidence. Bibliography blocks use `role: bibliography-entry`; their text policy is `preserve_source`. Bibliography headings remain translatable. Cross-chapter notes retain one owner and one body; numbering follows first body reference in the owner chapter. Each occurrence receives its own return target. Multi-target and author-year citations use verified explicit targets, preserving original labels.
+
+For source corrections, run `revise --work WORK --changes corrections.json`. Each text correction contains `unit_id`, current `source_sha256`, `text` and PDF comparison `evidence`. Relationship corrections contain `ref_id`, `reference_sha256`, `targets` and `evidence`. The command creates another source snapshot and a versioned review record. Reconcile the AiNiee cache afterwards. Explicit structural split/merge mappings are required by the adapter; prior translations become history, never guessed text for new units.
+
+For split/merge or chapter/block restructuring, `revise-structure --work WORK --plan NEW_REVIEW --id-mapping MAPPING --evidence TEXT` re-normalizes against the same immutable raw, checks explicit old/new unit lineage and preserves the previous review. Pass the same mapping to AiNiee's reconcile. Resource-only corrections use `asset_id`, current `asset_sha256` (the canonical JSON spec digest), `changes` and `evidence`; for example `includes_label: true` records that an equation image already contains its printed number. Such changes invalidate affected structure proofs while retaining unchanged translated text. Every returned resource and every original MinerU import member is hash-bound; mutating bytes cannot retain a successful publication status.
+
+The target language and editorial navigation labels are explicit cache/manifest settings. Chinese uses 目录、注释、返回; other language projects may set `target_labels`. These generated interface labels are distinct from original-language source prose. `structure_sha256` binds each proof to that unit's non-text containers, resource specifications and related semantic links; unrelated structure revisions retain valid proofs.
+
+Formal translated publication:
+
+```powershell
+python "<publisher>/scripts/pdf_to_epub.py" build --work "D:/译书 项目/源书" --book "D:/译书 项目/译书.json" --translation-manifest "D:/译书 项目/translation-manifest.json" --output "D:/译书 项目/成品.epub" --report-dir "D:/译书 项目/出版报告"
+python "<publisher>/scripts/pdf_to_epub.py" check "D:/译书 项目/成品.epub" --epubcheck "D:/工具/epubcheck.jar" --output "D:/译书 项目/EPUB检查.json"
+```
+
+`--book` and `--translation-manifest` are paired. Reports must be separate from the source WORK. The builder checks the current source snapshot, original PDF, raw/review bytes, exact source/target units and unchanged non-text structure. `translation-manifest/1` binds document/revision and source/target content hashes, plus byte hashes of actual CacheProject, prompt, Schema-validated glossary, independent proofreading records and human decisions. Current disk cache values are checked as well as their hash. Translation status and a reviewed flag cannot substitute for evidence.
+
+Every included unit needs current source verification and independent source/target comparison. `pdf-proofreading/1` records unit/version hashes, independent translation/review context identities, prompt/glossary hashes, PDF page/region observations, findings and recheck conclusions. Bibliography remains untranslated while its source retention is checked. Open semantic relations require an explicit human `text_only` decision bound to the reference and related source units. Missing assets, broken IDs, incomplete translations and invalid EPUBs cannot be waived.
+
+Source WORK/book.json, raw, original review and state are never replaced by translated publication. Reports and publication state go to REPORT_DIR. EPUBCheck and actual reader verification remain separate required acceptance steps; build success establishes structural packaging only. See `translation_contract.py` for executable validation.

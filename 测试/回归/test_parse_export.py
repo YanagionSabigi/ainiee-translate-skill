@@ -1,7 +1,7 @@
 import os
 from ainiee_translate import parse, export, cache_io
 
-FIX = os.path.join(os.path.dirname(__file__), "fixtures", "input_txt")
+FIX = os.path.join(os.path.dirname(os.path.dirname(__file__)), "夹具", "input_txt")
 MARKER = "译:"
 
 

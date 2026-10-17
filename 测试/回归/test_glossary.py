@@ -1,7 +1,7 @@
 import os
 from ainiee_translate import glossary_seed
 
-FIX = os.path.join(os.path.dirname(__file__), "fixtures")
+FIX = os.path.join(os.path.dirname(os.path.dirname(__file__)), "夹具")
 
 def test_load_seed_merges_public_and_analysis():
     seed = glossary_seed.load_seed(

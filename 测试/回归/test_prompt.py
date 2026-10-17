@@ -2,7 +2,7 @@ import json
 import os
 from ainiee_translate.prompt import build_user_prompt, build_translate_prompt, build_polish_prompt
 
-FIX = os.path.join(os.path.dirname(__file__), "fixtures")
+FIX = os.path.join(os.path.dirname(os.path.dirname(__file__)), "夹具")
 
 
 def test_build_user_prompt_assembles_active_blocks(tmp_path):

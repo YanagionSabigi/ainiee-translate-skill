@@ -3,7 +3,7 @@ import os
 import pytest
 from ainiee_translate import profile, module
 
-FIX = os.path.join(os.path.dirname(__file__), "fixtures")
+FIX = os.path.join(os.path.dirname(os.path.dirname(__file__)), "夹具")
 
 
 @pytest.fixture
