@@ -7,6 +7,11 @@ import re
 import tempfile
 
 
+def text_sha256(text: str) -> str:
+    """Hash an exact UTF-8 string, without JSON quoting or normalization."""
+    return hashlib.sha256(text.encode('utf8')).hexdigest()
+
+
 def sha256(path):
     with Path(path).open('rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()

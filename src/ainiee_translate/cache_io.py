@@ -160,7 +160,9 @@ class WriteResult:
 
 
 def apply_writeback(cache_path: str, items: list[dict], status: int, get_text,
-                    check=None, force: bool = False) -> WriteResult:
+                    check=None, force: bool = False, *,
+                    expected_source_sha256: dict[int, str] | None = None,
+                    expected_target_sha256: dict[int, str] | None = None) -> WriteResult:
     """Lock → backup → load → for each item: gate → mutate → atomic save.
 
     `check(cache_item, text) -> (hard: list[str], soft: list[str])` is the write
@@ -177,6 +179,13 @@ def apply_writeback(cache_path: str, items: list[dict], status: int, get_text,
             item = idx.get(ti)
             if item is None:
                 res.rejected.append({"text_index": ti, "reason": "unknown_index"})
+                continue
+            from .artifact_io import text_sha256
+            if expected_source_sha256 is not None and expected_source_sha256.get(ti) != text_sha256(item.source_text):
+                res.rejected.append({'text_index': ti, 'reason': 'stale_source'})
+                continue
+            if expected_target_sha256 is not None and expected_target_sha256.get(ti) != text_sha256(item.translated_text):
+                res.rejected.append({'text_index': ti, 'reason': 'stale_target'})
                 continue
             from .pdf_protection import check_item
             structure = check_item(item.source_text, text, item.extra)

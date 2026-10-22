@@ -1,8 +1,8 @@
 ---
 name: ainiee-translate
-description: Use when translating a novel, EPUB, TXT or PDF on the coding agent itself, resuming an AiNiee translation cache, or exporting reviewed PDF translations to Markdown/EPUB or LaTeX/Typst book templates. Triggers on "用 agent 翻译这本书", "agent 版 aniee 翻译", "把这本 epub 翻译了" and PDF translation requests.
+description: Use when translating a novel, EPUB, TXT or PDF on the coding agent itself, resuming an AiNiee cache, exporting reviewed translations, or proofreading an AiNiee EPUB using 微信读书 blue wavy highlights, reading thoughts, desktop HTML comparisons and numbered chat decisions.
 metadata:
-  version: "2.0.0-rc.1"
+  version: "2.0.0"
 ---
 
 # ainiee-translate 技能指南
@@ -21,6 +21,8 @@ parse → 构建锁定词汇表 → 逐章翻译（agent 按规则） → 写回
 - 每批写回前自动备份（时间戳）：`cache.json.bak.YYYYMMDD_HHMMSS`。
 
 本技能自带管道脚本（`scripts/ainiee_translate/`），无需单独 `pip install` 本包；只需一个装了几个轻量库的 Python venv（见下）。
+
+**微信读书人工校对入口：** 用户要求“微信读书校对”“读取蓝色波浪线”“根据阅读想法生成 HTML”或对阅读报告“按编号批复”时，先读 [微信读书人工校对](references/weread_proofreading.md)，使用独立的 `reading` 命令。冻结阅读 EPUB、保留稳定编号与报告版本；自然语言想法先辨析，聊天明确批复后才分批写回；整本结束后统一生成成品。此路径不走旧 `review final/pick` 的自动接受应用文件。
 
 ---
 

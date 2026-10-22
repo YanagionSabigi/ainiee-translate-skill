@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'">
+<title>$book_title · 微信读书校对 · $round_id</title><style>$css</style></head>
+<body><header><p class="eyebrow">AiNiee · 微信读书人工校对</p><h1>$book_title</h1><p>阅读轮次 $round_id</p>
+<p>报告 $report_revision · $created_at</p><p>在聊天中按编号批复：接受 7 / 7 用 B / 保留 7 / 搁置 7 / 7 改为……</p>
+<p>“接受”采用本报告展示的推荐定稿。意见需先辨析；单处批准仅用于该条。整本结束后统一生成成品。</p></header>
+<main>$sync_audit<table><colgroup><col class="identity"><col class="source"><col class="target"><col class="notes"><col class="candidates"><col class="reason"></colgroup>
+<thead><tr><th>编号 / 状态</th><th>位置与原文</th><th>阅读选区 / 当前工作译文</th><th>用户意见</th><th>候选 / 推荐定稿</th><th>辨析依据 / 证据</th></tr></thead><tbody>$rows</tbody></table></main>
+<footer>静态本地报告。技术绑定与历史记录可在每条审计区展开。</footer></body></html>

@@ -5,6 +5,7 @@ disable-model-invocation: true
 # ainiee-translate 命令菜单
 
 **翻译流程**
+- `/ainiee-translate:reading-review` —— 微信读书蓝色波浪线/想法 → 桌面 HTML → 按编号聊天批复 → 整本定稿
 - `/ainiee-translate:translate <输入文件> [模块名]` —— 端到端翻译（解析→词汇表→翻译→导出→校验）
 - `/ainiee-translate:import-project [list | <缓存|项目ID> <项目目录>]` —— 导入已有项目/AiNiee 缓存继续翻译/润色/导出
 - `/ainiee-translate:glossary [--config PATH] [--analysis PATH]` —— 构建并锁定词汇表
