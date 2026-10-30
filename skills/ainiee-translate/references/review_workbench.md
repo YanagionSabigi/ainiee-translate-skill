@@ -46,3 +46,17 @@
 默认使用冻结映射绑定的路径；可显式传 `--cache`/`--locked`，但 apply 拒绝另一个业务文件。命令只消费正式提交，词表按字段核验/备份/原子写回；微信决定转换后调用既有 reading-decisions 与 CAS 事务，保留网页 submission 和聊天出处。重复执行复用决定，不重新批准。返回的 `needs_agent` 是待处理指示，须由 agent 对照原文辨析，形成新建议和新审核包；不把评论中的“用 B”等普通文本自动解析为已批准译文。
 
 出现过期笔记、评估、源文、身份或工作稿冲突时保留当前稿并报告，不强行覆盖。reading 事务中断先沿用 `reading recover`，撤回仍走原 `reading undo`；一轮提交不代表全书已读完，最终出版继续遵守 reading finalize 的全部条件。旧聊天编号决定继续按 weread_proofreading 的兼容流程处理。
+
+
+## 交给别人审核与回收
+
+由 agent 准备并导出，不把完整技能安装包发给审核者：
+
+```text
+<PFX> -m ainiee_translate.workbench export <PROJECT> --out <review.zip>
+<PFX> -m ainiee_translate.workbench import-results <PROJECT> --from <returned.json或zip>
+```
+
+审核 ZIP 只携带冻结材料、必要网页/资源、JSON 校验与保存服务及依赖说明，不含 SKILL、示例、Git 仓库、业务缓存或 AiNiee 翻译工具。普通文本包去掉 KaTeX/字体，无需 Node.js；公式包才附带数学资源并要求 Node.js 18+。审核者需要 Python 3.11+、jsonschema >=4.23,<5，无需 Git。启动不会自动安装依赖或下载，首次依赖安装与每次启动分开。
+
+接收者解压，按 OPEN-ME.txt 运行 python start_review.py；正式提交后从页面“记录”下载结果 JSON。Agent 只向原 PROJECT 导入回传数据，不执行回传包的代码；继续保留草稿/正式提交区分，用户在聊天明确继续后才 compare/apply。结果不得导入另一个书籍或轮次，冲突仍交人处理。`export --results-only` 可只导出已提交决定。

@@ -11,13 +11,19 @@ from pathlib import Path
 
 from .model import ROOT, ReviewError, validate_schema, resolve_decision, safe_path, has_human_draft
 from .storage import Store, atomic_json, read_json, fingerprint
-from .gitops import git, snapshot, verify_baseline
+from .gitops import verify_baseline
 
 
-def copy_runtime(destination):
+def copy_runtime(destination,portable=False,with_math=True):
     destination=Path(destination)
-    for folder in ('review_workbench','web','schemas','examples','skill'):
-        shutil.copytree(ROOT/folder,destination/folder,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
+    for folder in (('review_workbench','web','schemas') if portable else ('review_workbench','web','schemas','examples','skill')):
+        excluded=['__pycache__','*.pyc']
+        if portable and folder=='review_workbench':excluded+=['__main__.py','demo.py']
+        if portable and folder=='web' and not with_math:excluded+=['katex','validate-tex.cjs']
+        shutil.copytree(ROOT/folder,destination/folder,ignore=shutil.ignore_patterns(*excluded))
+    if portable and not with_math:
+        index=destination/'web/index.html'
+        index.write_text('\n'.join(line for line in index.read_text(encoding='utf-8').splitlines() if 'vendor/katex/' not in line)+'\n',encoding='utf-8')
     shutil.copyfile(ROOT/'requirements.txt',destination/'requirements.txt')
     shutil.copyfile(ROOT/'LICENSE',destination/'LICENSE')
 
@@ -52,22 +58,24 @@ def export_package(root,output,results_only=False,wheels=False):
             if results_only:atomic_json(stage/'results.json',result_envelope(store))
             else:
                 data['origin_commit']=data.get('origin_commit') or data['base_commit']
-                data['git']={'ref':'refs/review-workbench/portable','scope':['package.json']+[a['path'] for a in data['assets']],'portable':True}
+                data['git']={'ref':'portable-manifest-v1','scope':['package.json']+[a['path'] for a in data['assets']],'portable':True}
                 atomic_json(stage/'package.json',data)
+                material=copy.deepcopy(data)
+                for key in ('base_commit','origin_commit','git'):material.pop(key,None)
+                atomic_json(stage/'baseline.json',{'base_commit':data['base_commit'],'material_sha256':fingerprint(material)})
                 for asset in data['assets']:
                     src=safe_path(store.root,asset['path']);dst=safe_path(stage,asset['path'])
                     dst.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(src,dst)
                 draft['material_hash']=fingerprint(data);atomic_json(stage/'drafts.json',draft)
                 for s in submissions:atomic_json(stage/'submissions'/f"{s['submission_id']}.json",s)
         if not results_only:
-            copy_runtime(stage)
-            (stage/'start_review.py').write_text('from pathlib import Path\nfrom review_workbench.__main__ import main\nimport sys\nif __name__ == "__main__":\n    main(["serve",str(Path(__file__).resolve().parent),*sys.argv[1:]])\n',encoding='utf-8')
-            (stage/'OPEN-ME.txt').write_text('校对包\n\n需要 Python 3.11+ 和 Git；提交公式决定还需 Node.js（无需 npm）。\n首次运行：python -m pip install -r requirements.txt\n启动：python start_review.py\n\n离线依赖（若含 wheels/）：python -m pip install --no-index --find-links wheels -r requirements.txt\n\n回传结果：python -m review_workbench export . --results-only --out ../results.zip\n也可在网页“记录”中下载结果 JSON。\n',encoding='utf-8')
+            with_math=any(b['type']=='tex' for item in data['items'] for key in ('before','proposal','baseline','evidence') for b in (item.get(key) or []))
+            copy_runtime(stage,portable=True,with_math=with_math)
+            (stage/'start_review.py').write_text('from pathlib import Path\nimport argparse\nimport sys\n\nif __name__ == "__main__":\n    if hasattr(sys.stdout,"reconfigure"): sys.stdout.reconfigure(encoding="utf-8")\n    parser=argparse.ArgumentParser(description="启动本机校对网页")\n    parser.add_argument("--port",type=int,default=0)\n    parser.add_argument("--no-open",action="store_true")\n    args=parser.parse_args()\n    print("正在启动本机校对服务（不会安装依赖或联网下载）…",flush=True)\n    from review_workbench.server import serve\n    serve(Path(__file__).resolve().parent,args.port,not args.no_open)\n',encoding='utf-8')
+            (stage/'OPEN-ME.txt').write_text('校对包\n\n需要 Python 3.11+；Python 依赖：jsonschema >=4.23,<5（详见 requirements.txt）。\n'+('本包含公式，提交公式决定需要 Node.js 18+；无需 npm 安装。\n' if with_math else '本包无公式，不需要 Node.js。\n')+'接收者无需 Git，也不需要安装任何 AI skill。\n\n首次安装依赖：python -m pip install -r requirements.txt\n启动：python start_review.py\n启动脚本不会执行 pip 或联网下载。保留终端窗口，使用打印的完整链接。\n\n离线依赖（仅导出时明确启用才含 wheels/）：python -m pip install --no-index --find-links wheels -r requirements.txt\n\n回传：在网页“记录”中下载结果 JSON，发回给材料提供者。\n',encoding='utf-8')
             if wheels:
                 result=subprocess.run([os.sys.executable,'-m','pip','download','--only-binary=:all:','-r',str(stage/'requirements.txt'),'-d',str(stage/'wheels')],capture_output=True)
                 if result.returncode:raise ReviewError('下载离线依赖失败：'+result.stderr.decode(errors='replace'))
-            git(stage,'init');git(stage,'config','user.name','Review Workbench');git(stage,'config','user.email','review-workbench@localhost')
-            snapshot(stage,data['git']['scope'],'portable')
         # Create the ZIP outside stage to avoid recursively including itself.
         fd,pending=tempfile.mkstemp(prefix='.review-export-',suffix='.zip',dir=output.parent);os.close(fd)
         try:

@@ -1,7 +1,7 @@
 {
   "name": "ainiee-translate",
   "description": "Agent-native translation, reviewed PDF publication, and an interactive terminology and WeRead proofreading workbench.",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": {
     "name": "Anji Xu",
     "email": "xuanji86@gmail.com"

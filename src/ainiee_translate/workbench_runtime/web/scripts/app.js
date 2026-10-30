@@ -4,7 +4,6 @@ import { restoreBackup, getItemDraft, draftDifferences, draftBlocks } from "./dr
 
 // Refactoring UI §2.1 / §3.3 / §3.3.1: materials first; directory and
 // queue are optional navigation. Reuse the existing color/type/spacing tokens.
-const desktopDirectory = matchMedia("(min-width: 901px)");
 let queueOpen = false;
 
 const $ = (s) => document.querySelector(s),
@@ -792,7 +791,7 @@ function article(i) {
   article.append(
     el("footer", { class: "item-footer" }, [
       `${state.package.items.indexOf(i) + 1} / ${state.package.items.length}`,
-      el("button", { onclick: () => nextItem(i) }, "下一项 →"),
+      view === "focus" ? el("button", { onclick: () => nextItem(i) }, "下一项 →") : null,
     ]),
   );
   return article;
@@ -1265,8 +1264,7 @@ function setDirectory(open) {
   $("#directory-toggle").setAttribute("aria-expanded", String(open));
 }
 $("#directory-toggle").onclick = () => setDirectory(!$("#shell").classList.contains("directory-open"));
-desktopDirectory.addEventListener("change", e => setDirectory(e.matches));
-setDirectory(desktopDirectory.matches);
+setDirectory(false);
 $("#submit").onclick = submit;
 $("#history-toggle").onclick = history;
 $("#modal-close").onclick = closeModal;

@@ -1,6 +1,6 @@
 # 发布包与 CC Switch
 
-`v2.1.0` 新增术语表与微信读书反馈共用的交互校对工作台，支持草稿恢复、正式提交、版本核验和受控写回。此前的 `v2.0.0` 正式版与 `v2.0.0-rc.1` 预发布继续保留。实际 skill 名称及安装目录继续为 `ainiee-translate`，保留既有缓存工具的调用名。
+`v2.1.1` 同步新版工作台，精简交给他人的审核包，提供 export/import-results 入口。审核端不再携带 SKILL、示例、Git 仓库或普通文本不需要的公式资源。验证与启动计时见 [精简审核包验收](portable-review-validation.md)。`v2.1.0` 引入的术语表与微信读书交互校对、草稿恢复、正式提交和受控写回继续保留。此前的 `v2.0.0` 正式版与 `v2.0.0-rc.1` 预发布继续保留。实际 skill 名称及安装目录继续为 `ainiee-translate`，保留既有缓存工具的调用名。
 
 GitHub Release 提供完整 skill ZIP、Python wheel、逐文件 manifest 和 `SHA256SUMS`。ZIP 解压后只有一个 `ainiee-translate/`，含 SKILL、脚本、共享 publisher、工作台离线资源、模板、引用资料及许可证；无需另行安装 publisher 或工作台 skill。工作台需要 Git 和 jsonschema，公式决定还需 Node.js。用户 PDF、译文、笔记、审核项目、模型、运行配置、API 凭据及日志均不在发布包中。
 

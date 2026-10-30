@@ -24,6 +24,13 @@ def main(argv=None):
     s.add_argument('project')
     s.add_argument('--port', type=int, default=0)
     s.add_argument('--no-open', action='store_true')
+    e = commands.add_parser('export', help='导出交给他人的精简审核包')
+    e.add_argument('project')
+    e.add_argument('--out', required=True)
+    e.add_argument('--results-only', action='store_true')
+    i = commands.add_parser('import-results', help='导入他人回传的正式决定')
+    i.add_argument('project')
+    i.add_argument('--from', dest='source', required=True)
     for name in ('compare', 'apply'):
         p = commands.add_parser(name, help='比较当前稿' if name == 'compare' else '核验并消费正式提交')
         p.add_argument('project')
@@ -43,6 +50,14 @@ def main(argv=None):
             store, binding = load_project(args.project)
             if args.command == 'serve':
                 return runtime().server.serve(store.root, args.port, not args.no_open) or 0
+            if args.command in ('export', 'import-results'):
+                from .workbench_runtime.review_workbench.transfer import export_package, import_results
+                if args.command == 'export':
+                    result = dict(path=str(export_package(store.root, args.out, results_only=args.results_only)))
+                else:
+                    result = import_results(store.root, args.source)
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+                return 1 if result.get('conflicts') else 0
             from .workbench_glossary import glossary_targets, apply_glossary
             from .workbench_reading import reading_targets, apply_reading
             kind = binding['kind']

@@ -90,6 +90,13 @@ def prepare(project,input_path,scope_path,destination):
 def verify_baseline(root,data):
     if not data.get('base_commit'): raise ReviewError('审核包缺少 Git 基准')
     root=Path(root).resolve()
+    if data.get('git',{}).get('portable') and data['git']['ref']=='portable-manifest-v1':
+        manifest=read_json(root/'baseline.json')
+        material=copy.deepcopy(data)
+        for key in ('base_commit','origin_commit','git'):material.pop(key,None)
+        if manifest.get('base_commit')!=data['base_commit'] or manifest.get('material_sha256')!=fingerprint(material):
+            raise ReviewError('审核材料与导出基准不一致',409)
+        return
     if data.get('git',{}).get('portable'):
         repo=root;commit=data['git']['ref']
     else:

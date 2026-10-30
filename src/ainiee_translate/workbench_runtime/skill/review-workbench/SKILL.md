@@ -54,6 +54,6 @@ python SKILL_DIR/scripts/review.py export PACKAGE --out OFFLINE_ZIP --offline-de
 python SKILL_DIR/scripts/review.py import-results PACKAGE --from RETURNED_JSON_OR_ZIP
 ```
 
-包内有启动入口、材料、离线前端和最小 Git。接收者需 Python/Git；离线 wheel 匹配导出机器环境，跨平台先安装声明依赖。只需回传结果时，在网页“记录”下载 JSON，或使用 `export --results-only`。导入程序只读回传数据，不运行对方包内的启动脚本。
+审核包只携带启动入口、材料、前端、必要的 Python 服务与校验结构，不含 skill、示例或 Git 仓库；接收者需要 Python，无需 Git。含公式时保留离线 KaTeX，公式决定需要 Node.js。导出基准使用材料指纹清单，保留原 base_commit 供回传核对；旧 Git 迁移包仍兼容。离线 wheel 仅显式请求时携带，且匹配导出机环境。接收者在网页“记录”下载结果 JSON；`export --results-only` 由完整工具仓库执行。导入程序只读回传数据，不运行对方包内的启动脚本。
 
 本 skill 不提供任何翻译/出版工具适配，也不直接修改已有业务 skill。

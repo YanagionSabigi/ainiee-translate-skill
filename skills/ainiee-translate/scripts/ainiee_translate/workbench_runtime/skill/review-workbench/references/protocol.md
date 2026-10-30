@@ -67,4 +67,4 @@ accept/keep/edit 的决定含 `item_id,target_id,action,blocks`，blocks 为完�
 
 用户可以在比较视图“采用此决定”。这会生成新的人工提交，`resolves: [{submission_id,target_id}]` 明确列出被解决的旧决定。旧提交仍可审计，活跃比较只使用未被明确解决的决定；回传包需带上被引用的历史。`resolves` 不由业务 agent 擅自补写。
 
-包 ID/基准不匹配、同提交编号不同内容、未知条目或伪造 accept 内容会被拒绝。回传只认已提交决定，草稿和未提交选项不自动应用。跨目录迁移通过包内 Git 基准与 origin_commit 关联，不能要求接收者复制整个业务仓库。
+包 ID/基准不匹配、同提交编号不同内容、未知条目或伪造 accept 内容会被拒绝。回传只认已提交决定，草稿和未提交选项不自动应用。跨目录迁移通过包内 baseline.json 材料指纹、原 base_commit 与 origin_commit 关联，不携带 Git 仓库，也不要求接收者安装 Git。旧 Git 迁移包仍可读取。
