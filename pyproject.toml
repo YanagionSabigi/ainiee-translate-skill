@@ -14,6 +14,7 @@ dependencies = [
     "polib",            # po (gettext)
     "python-pptx",      # pptx
     "chardet",          # optional encoding sniff (txt/srt/...); graceful if absent
+    "jsonschema>=4.23,<5", # bundled review-workbench protocol validation
 ]
 
 [project.optional-dependencies]
@@ -25,7 +26,7 @@ pythonpath = ["src"]
 addopts = "-q"
 
 [tool.setuptools.package-data]
-ainiee_translate = ["*.html", "_vendor/NOTICE", "schemas/*.json", "schemas/*NOTICE*", "assets/*.css", "templates/book/*.yaml", "templates/book/*/*", "templates/book/latex/rosepine/*"]
+ainiee_translate = ["*.html", "_vendor/NOTICE", "schemas/*.json", "schemas/*NOTICE*", "assets/*.css", "templates/book/*.yaml", "templates/book/*/*", "templates/book/latex/rosepine/*", "workbench_runtime/**/*", "workbench_runtime/LICENSE", "workbench_runtime/UPSTREAM.md", "workbench_runtime/requirements.txt"]
 
 [build-system]
 requires = ["setuptools"]
