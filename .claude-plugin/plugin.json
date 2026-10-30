@@ -1,12 +1,12 @@
 {
   "name": "ainiee-translate",
-  "description": "Agent-native EPUB/TXT translation and reviewed local MinerU PDF translation through the shared pdf-to-epub publisher.",
-  "version": "2.0.0",
+  "description": "Agent-native translation, reviewed PDF publication, and an interactive terminology and WeRead proofreading workbench.",
+  "version": "2.1.0",
   "author": {
     "name": "Anji Xu",
     "email": "xuanji86@gmail.com"
   },
-  "homepage": "https://github.com/xuanji86/ainiee-translate-skill",
+  "homepage": "https://github.com/YanagionSabigi/ainiee-translate-skill",
   "repository": "https://github.com/YanagionSabigi/ainiee-translate-skill",
   "license": "AGPL-3.0-only"
 }

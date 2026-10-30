@@ -51,11 +51,11 @@
 
 ## 本机安装与保留的决定
 
-已更新 `C:/Users/10166/.codex/skills/ainiee-translate`，仅更新本次涉及的 105 个文件，逐项校验 SHA256。原有其他文件保留。备份在 `local/workbench-validation/installed-skill-backup`，清单与核验回执分别为 `install-manifest.json`、`installed-receipt.json`。
+已更新本机 `~/.codex/skills/ainiee-translate`，仅更新本次涉及的 105 个文件，逐项校验 SHA256。原有其他文件保留。备份在 `local/workbench-validation/installed-skill-backup`，清单与核验回执分别为 `install-manifest.json`、`installed-receipt.json`。
 
 - 在现有工作区的独立功能分支实施，未建立可能位于工作区外的原生 worktree；代价是开发共用现有 checkout，当前修改均已核对归属。
 - 用户确认设计并要求继续后，实施计划作为内部执行安排，不再重复请求流程批准；未扩大产品范围。
-- 暂存和验收均保持在工作区，保留本地分支与备份；不 push、不 PR、不部署。用户可后续决定如何合并。
+- 开发验收阶段的暂存和资料均保持在工作区，保留本地分支与备份，当时未 push、PR 或部署。后续经用户单独授权的版本发布见 [发布说明](releases.md)。
 - 现阶段网页不增删术语实体，缺失的候选保持缺失；选择其他候选可逐段编辑，留言需要再辨析。此为已批准设计范围。
 
 没有已知需要延期处理的重要审查项。

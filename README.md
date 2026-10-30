@@ -8,7 +8,7 @@
 
 本项目依赖并继承两个上游项目的成果：[AiNiee](https://github.com/NEKOparapa/AiNiee) 提供基础文件读写、缓存结构及翻译规则，[AiNiee-skill（ainiee-translate-skill）](https://github.com/xuanji86/ainiee-translate-skill) 提供 Agent 翻译技能、提示词与术语表管理、批次工作流和插件基础。本项目在此基础上扩展 PDF 出版与阅读校对；基础运行所需的相关代码和技能文件已随本项目包含，无需为 EPUB / TXT 另外安装上述两个上游项目。
 
-> 当前版本：`v2.0.0`，本仓库首个正式版本。核对日期：2026-10-22。
+> 当前版本：`v2.1.0`，新增术语表与微信读书反馈的交互校对工作台。核对日期：2026-10-30。
 
 ## 可以做什么
 
@@ -18,13 +18,14 @@
 | 继续已有翻译 | 导入 AiNiee 工程缓存或本工具的 `cache.json`，从尚未完成的段落接续 |
 | 统一译名与风格 | 使用锁定术语表、自定义提示词，或复用包含这些设置的任务模块 |
 | 翻译 PDF | 优先本地 MinerU，也可显式选用远程 API 提取；整理结构、初翻、对照原页独立校对，再出版 EPUB；可选 Markdown、LaTeX、Typst 和模板 PDF |
-| 阅读时人工校对 | 在微信读书用蓝色波浪线和想法标记问题，生成桌面 HTML 对照报告，按编号明确批复后写回 |
+| 人工校对术语表 | 在本地工作台对照当前译名与建议，保存草稿、逐项修改并提交决定 |
+| 阅读时人工校对 | 在微信读书用蓝色波浪线和想法标记问题，在同一本地工作台查看原文、现译和候选，提交后回到聊天继续写回 |
 
 普通 EPUB / TXT 等项目按原格式导出；跨格式的 Markdown、EPUB 和书籍模板导出目前要求经过审阅的 PDF 结构。PDF 输出为重新排版的译书，不保留原 PDF 的逐页版式。
 
 ## 安装
 
-需要 Python **3.12 或更新版本**，以及能够加载技能、读写本地文件和运行 Python 的编码 Agent。基础格式无需安装 AiNiee 桌面应用，也无需配置 `AINIEE_REPO`。
+需要 Python **3.12 或更新版本**，以及能够加载技能、读写本地文件和运行 Python 的编码 Agent。交互校对工作台另需 **Git**；公式决定的提交或导入还需 Node.js，普通文本校对不需要 Node.js。基础格式无需安装 AiNiee 桌面应用，也无需配置 `AINIEE_REPO`。
 
 翻译 PDF 时还需配置 MinerU：本地模式准备独立环境和模型，远程模式准备 API 凭据并明确文档上传范围。两种配置及其限制见下方“PDF 翻译与出版”。
 
@@ -35,7 +36,7 @@
 ```powershell
 python -m venv .venv
 $env:AINIEE_PY = (Resolve-Path .\.venv\Scripts\python.exe).Path
-& $env:AINIEE_PY -m pip install msgspec beautifulsoup4 lxml rich openpyxl polib python-pptx chardet
+& $env:AINIEE_PY -m pip install msgspec beautifulsoup4 lxml rich openpyxl polib python-pptx chardet 'jsonschema>=4.23,<5'
 
 # Codex 默认技能目录；若自定义了 CODEX_HOME，改为相应目录。
 $skillParent = Join-Path $HOME '.codex/skills'
@@ -52,7 +53,7 @@ $env:PYTHONPATH = Join-Path $env:SKILL_DIR 'scripts'
 ```bash
 python3 -m venv .venv
 export AINIEE_PY="$PWD/.venv/bin/python"
-"$AINIEE_PY" -m pip install msgspec beautifulsoup4 lxml rich openpyxl polib python-pptx chardet
+"$AINIEE_PY" -m pip install msgspec beautifulsoup4 lxml rich openpyxl polib python-pptx chardet 'jsonschema>=4.23,<5'
 
 SKILL_PARENT="${CODEX_HOME:-$HOME/.codex}/skills"
 mkdir -p "$SKILL_PARENT"
@@ -229,21 +230,38 @@ $env:AINIEE_MINERU_ROOT = 'D:/Tools/MinerU'
 
 `--format pdf` 默认尝试 LaTeX、Typst 两条路线，可用 `--pdf-engine latex` 或 `--pdf-engine typst` 选择。详见 [书籍模板与工具要求](skills/ainiee-translate/references/book_templates.md)。
 
+## 本地校对工作台
+
+术语表和微信读书反馈共用一套本地校对页面，复用 [Review Workbench](https://github.com/YanagionSabigi/review-workbench) 的设计与运行资源。左侧查看当前版本，右侧查看建议；可展开原文、其他候选和辨析依据，按需切换单项或连续阅读。页面资源、公式预览与相关字体随技能提供，无需 npm 安装或前端构建。
+
+每项可选择接受建议、保留当前版本、手动修改或提出意见。**自动保存是草稿；点击“提交本轮”后，回到聊天说“继续”，Agent 才核验并写回。** 如果工作稿已变动，先处理冲突；留言会交给 Agent 继续辨析，不会直接变成已批准译文。
+
+可以直接说：
+
+```text
+用校对工作台检查这个项目的术语表，并载入我提供的建议表。
+我会在网页逐项修改并提交，完成后回到聊天说继续。
+```
+
+没有建议表时显示“暂无建议”，仍可手动修改或留言。人物、术语与禁翻项分组展示；当前版本不在网页增删术语实体。微信读书反馈需先完成定位和 Agent 辨析，再交给工作台处理。页面由本机服务打开，审核项目和本地版本记录保留在用户指定的工作目录。
+
+完整入口见 [校对工作台指南](skills/ainiee-translate/references/review_workbench.md)，验证范围见 [接入验收](docs/review-workbench-validation.md)。
+
 ## 微信读书人工校对
 
 适合已经有翻译缓存和阅读 EPUB、希望边读边改的项目：
 
 1. 冻结本轮 EPUB、原书、缓存及术语和提示词版本；手动将这一份 EPUB 导入微信读书。
 2. 用**蓝色波浪线**划出问题，可附自然语言想法；同步后定位到冻结版本。
-3. Agent 对照原文辨析，生成带稳定编号的桌面 HTML，展示现译、想法、候选与推荐。
-4. 在聊天中明确批复，例如“接受 7”“7 用 B”“保留 7”“搁置 7”或“7 改为……”，再写回对应段落。
+3. Agent 对照原文辨析，生成带稳定编号的校对工作台，展示现译、全部想法、原文、候选与推荐。
+4. 在网页接受、保留、逐段修改或留言，正式提交本轮后回到聊天说“继续”，再核验并写回对应段落。
 5. 整本读完并明确确认后，完成同步、处理全部未决事项，通过出版检查，统一生成新版。
 
 在线同步另需独立的微信读书官方技能目录和本机 `WEREAD_API_KEY` 环境变量。接口只读，不负责上传 EPUB，也不会把书中内容或阅读想法当成批准修改的指令。密钥不要写进聊天、命令参数或仓库。
 
 真实账号需要先核验自导入书、蓝色样式、笔记关联与快照完整性；能力不明时会保留待确认状态。当前验收记录尚未完成真实账号整本交付，不能据离线回归结果认定所有账号都能完成这一流程。
 
-操作与文件格式见 [微信读书人工校对](skills/ainiee-translate/references/weread_proofreading.md)，现有验证范围见 [微信读书校对验收记录](docs/weread-validation.md)。
+旧静态 HTML 和聊天编号批复继续可用，例如“接受 7”“7 用 B”“保留 7”“搁置 7”或“7 改为……”。操作与文件格式见 [微信读书人工校对](skills/ainiee-translate/references/weread_proofreading.md)，账号验证范围见 [微信读书校对验收记录](docs/weread-validation.md)。
 
 ## 常用入口与排查
 
@@ -276,8 +294,9 @@ Claude Code 插件提供以下入口；手动技能安装和 Codex 可直接用�
 - [通用翻译规则](skills/ainiee-translate/references/translation_rules.md)：逐段对应和标记保留。
 - [PDF 工作流](skills/ainiee-translate/references/pdf_workflow.md)：结构准备、修订和正式出版。
 - [书籍模板](skills/ainiee-translate/references/book_templates.md)：工具、字体和导出设置。
-- [微信读书人工校对](skills/ainiee-translate/references/weread_proofreading.md)：同步、HTML、批复和定稿。
+- [校对工作台](skills/ainiee-translate/references/review_workbench.md)：术语与阅读反馈的页面审核、草稿、提交和受控写回。
+- [微信读书人工校对](skills/ainiee-translate/references/weread_proofreading.md)：同步、辨析、批复和定稿。
 
 ## 许可证与来源
 
-项目采用 [AGPL-3.0-only](LICENSE)。本项目基于上游 [AiNiee](https://github.com/NEKOparapa/AiNiee) 和 [AiNiee-skill（ainiee-translate-skill）](https://github.com/xuanji86/ainiee-translate-skill) 的代码与工作流发展，保留相应许可和来源声明；内置读写与缓存代码的具体来源见 [vendored NOTICE](src/ainiee_translate/_vendor/NOTICE)。PDF 提取另依赖 MinerU，本地安装或远程服务需单独准备；LaTeX 模板内的 Rosé Pine 主题另附 [MIT 许可证](src/ainiee_translate/templates/book/latex/rosepine/LICENSE)。字体与外部工具不随技能分发。
+项目采用 [AGPL-3.0-only](LICENSE)。本项目基于上游 [AiNiee](https://github.com/NEKOparapa/AiNiee) 和 [AiNiee-skill（ainiee-translate-skill）](https://github.com/xuanji86/ainiee-translate-skill) 的代码与工作流发展，保留相应许可和来源声明；内置读写与缓存代码的具体来源见 [vendored NOTICE](src/ainiee_translate/_vendor/NOTICE)。PDF 提取另依赖 MinerU，本地安装或远程服务需单独准备；LaTeX 模板内的 Rosé Pine 主题另附 [MIT 许可证](src/ainiee_translate/templates/book/latex/rosepine/LICENSE)。校对工作台另附 [MIT 许可和来源](src/ainiee_translate/workbench_runtime/UPSTREAM.md)，KaTeX 与预览字体保留各自许可。书籍排版所需的系统字体和外部工具仍需自行准备。
