@@ -5,11 +5,11 @@ import os
 from pathlib import Path
 import uuid
 
-from .artifact_io import write_json
+from .artifact_io import write_json, digest
 from .glossary import load_locked, lint_locked
 from .helpers import backup_file
 from .workbench_bridge import (runtime, block, package, prepare_project, load_project,
-                               compare_project, instruction_text, application_lock)
+                               compare_project, instruction_text, application_lock, submitted_comparison)
 
 GROUPS = [('characters', '人物与命名', 'canonical'), ('terms', '术语', 'src'),
           ('non_translate', '禁翻项', 'marker')]
@@ -54,7 +54,11 @@ def _row(data, info):
             or not isinstance(rows[info['index']], dict)
             or rows[info['index']].get(info['identity_key']) != info['identity']):
         return None
-    return rows[info['index']]
+    row = rows[info['index']]
+    immutable = {k: v for k, v in row.items() if k not in [f['key'] for f in info['fields']]}
+    if digest(immutable) != info.get('identity_hash'):
+        return None
+    return row
 
 
 def prepare_glossary(locked, output, proposals=None):
@@ -72,6 +76,7 @@ def prepare_glossary(locked, output, proposals=None):
             fields = _fields(group, row)
             before = _blocks(row, fields)
             info = dict(group=group, index=index, identity_key=identity_key, identity=identity, fields=fields)
+            info['identity_hash'] = digest({k: v for k, v in row.items() if k not in [f['key'] for f in fields]})
             other = _row(suggested, info) if suggested else None
             proposal = _blocks(other, fields) if other is not None and other != row else None
             if proposal == before:
@@ -80,6 +85,7 @@ def prepare_glossary(locked, output, proposals=None):
                 before=before, baseline=copy.deepcopy(before), proposal=proposal,
                 evidence=[block('source', '原词：' + identity),
                           block('metadata', '\n'.join(f'{k}：{v}' for k, v in row.items() if k not in [f['key'] for f in fields]))],
+                allow_empty_blocks=[f['key'] for f in fields if f['key'] not in ('dst', 'render', 'keep_source')],
                 rationale='逐项核对译名、分类与说明；别名每行一项，“保留原文”使用是或否。', location=identity))
             binding['items'][iid] = info
     return prepare_project(output, p, binding)
@@ -104,45 +110,49 @@ def apply_glossary(project, locked, instruction):
         if Path(locked).resolve() != Path(binding['locked']).resolve():
             raise ValueError('词表路径与本轮业务绑定不同')
         data = load_locked(locked)
-        comparison = compare_project(project, glossary_targets(binding, locked))
-        result = dict(applied=0, conflicts=0, needs_agent=[], results=[])
-        for entry in comparison['items']:
-            status = entry['status']
-            if status == 'needs_agent':
-                result['needs_agent'].append(entry)
-            elif status in ('conflict', 'missing_current'):
-                result['conflicts'] += 1
-            elif status == 'ready':
-                info = binding['items'][entry['item_id']]
-                row = _row(data, info)
-                values = {b['id']: b['text'] for b in entry['decision']['blocks']}
-                for f in info['fields']:
-                    value = values[f['key']]
-                    if f['kind'] == 'bool':
-                        if value not in ('是', '否'):
-                            raise ValueError('保留原文字段只接受“是”或“否”')
-                        value = value == '是'
-                    elif f['kind'] == 'list':
-                        value = [line.strip() for line in value.splitlines() if line.strip()]
-                    # Do not introduce an empty optional field on a keep decision.
-                    if f['key'] in row or value:
-                        row[f['key']] = value
-                result['applied'] += 1
-            result['results'].append(dict(item_id=entry['item_id'], status=status,
-                                          submission_id=entry['submission_id']))
-        if result['applied']:
-            # Validate without touching the live file, including project-specific schema.
-            schema_path = os.environ.get('AINIEE_GLOSSARY_SCHEMA')
-            if schema_path:
-                from jsonschema import Draft202012Validator
-                schema = json.loads(Path(schema_path).read_text(encoding='utf-8'))
-                Draft202012Validator.check_schema(schema)
-                if list(Draft202012Validator(schema).iter_errors(data)):
-                    raise ValueError('修改后的词表不符合项目 JSON Schema')
-            if any(x['kind'] in ('character_missing_render', 'term_missing_src', 'term_missing_dst') for x in lint_locked(data)):
-                raise ValueError('修改后的词表未通过结构检查')
-            backup_file(str(locked))
-            write_json(locked, data)
-        write_json(Path(project) / 'applications' / (uuid.uuid4().hex + '.json'),
-                   dict(instruction=instruction, result=result))
-        return result
+        with submitted_comparison(project, glossary_targets(binding, locked)) as comparison:
+            return _consume(project, locked, instruction, data, binding, comparison)
+
+
+def _consume(project, locked, instruction, data, binding, comparison):
+    result = dict(applied=0, conflicts=0, needs_agent=[], results=[])
+    for entry in comparison['items']:
+        status = entry['status']
+        if status == 'needs_agent':
+            result['needs_agent'].append(entry)
+        elif status in ('conflict', 'missing_current'):
+            result['conflicts'] += 1
+        elif status == 'ready':
+            info = binding['items'][entry['item_id']]
+            row = _row(data, info)
+            values = {b['id']: b['text'] for b in entry['decision']['blocks']}
+            for f in info['fields']:
+                value = values[f['key']]
+                if f['kind'] == 'bool':
+                    if value not in ('是', '否'):
+                        raise ValueError('保留原文字段只接受“是”或“否”')
+                    value = value == '是'
+                elif f['kind'] == 'list':
+                    value = [line.strip() for line in value.splitlines() if line.strip()]
+                # Do not introduce an empty optional field on a keep decision.
+                if f['key'] in row or value:
+                    row[f['key']] = value
+            result['applied'] += 1
+        result['results'].append(dict(item_id=entry['item_id'], status=status,
+                                      submission_id=entry['submission_id']))
+    if result['applied']:
+        # Validate without touching the live file, including project-specific schema.
+        schema_path = os.environ.get('AINIEE_GLOSSARY_SCHEMA')
+        if schema_path:
+            from jsonschema import Draft202012Validator
+            schema = json.loads(Path(schema_path).read_text(encoding='utf-8'))
+            Draft202012Validator.check_schema(schema)
+            if list(Draft202012Validator(schema).iter_errors(data)):
+                raise ValueError('修改后的词表不符合项目 JSON Schema')
+        if any(x['kind'] in ('character_missing_render', 'term_missing_src', 'term_missing_dst') for x in lint_locked(data)):
+            raise ValueError('修改后的词表未通过结构检查')
+        backup_file(str(locked))
+        write_json(locked, data)
+    write_json(Path(project) / 'applications' / (uuid.uuid4().hex + '.json'),
+               dict(instruction=instruction, result=result))
+    return result

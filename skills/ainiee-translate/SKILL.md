@@ -1,6 +1,6 @@
 ---
 name: ainiee-translate
-description: Use when translating a novel, EPUB, TXT or PDF on the coding agent itself, resuming an AiNiee cache, exporting reviewed translations, or proofreading an AiNiee EPUB using 微信读书 blue wavy highlights, reading thoughts, desktop HTML comparisons and numbered chat decisions.
+description: Use when translating a novel, EPUB, TXT or PDF on the coding agent itself, resuming an AiNiee cache, exporting reviewed translations, reviewing terminology, or proofreading translations using 微信读书 highlights and reading thoughts through a local review workbench or numbered chat decisions.
 metadata:
   version: "2.0.0"
 ---
@@ -22,7 +22,7 @@ parse → 构建锁定词汇表 → 逐章翻译（agent 按规则） → 写回
 
 本技能自带管道脚本（`scripts/ainiee_translate/`），无需单独 `pip install` 本包；只需一个装了几个轻量库的 Python venv（见下）。
 
-**微信读书人工校对入口：** 用户要求“微信读书校对”“读取蓝色波浪线”“根据阅读想法生成 HTML”或对阅读报告“按编号批复”时，先读 [微信读书人工校对](references/weread_proofreading.md)，使用独立的 `reading` 命令。冻结阅读 EPUB、保留稳定编号与报告版本；自然语言想法先辨析，聊天明确批复后才分批写回；整本结束后统一生成成品。此路径不走旧 `review final/pick` 的自动接受应用文件。
+**校对入口：** 术语表人工复核、建议对照或网页审核，先读 [校对工作台](references/review_workbench.md)。微信读书划线/想法校对先读 [微信读书人工校对](references/weread_proofreading.md)，完成定位辨析后默认接入同一工作台。网页正式提交后，用户回到聊天明确说继续，才核验并受控写回；草稿、留言和手机想法不构成最终文本批准。旧静态报告和聊天按编号批复仍可用，整本结束后统一生成成品。
 
 ---
 
@@ -45,7 +45,7 @@ parse → 构建锁定词汇表 → 逐章翻译（agent 按规则） → 写回
    ```bash
    python3 -m venv ~/.venvs/ainiee-translate
    ~/.venvs/ainiee-translate/bin/pip install \
-     msgspec beautifulsoup4 lxml rich openpyxl polib python-pptx chardet
+     msgspec beautifulsoup4 lxml rich openpyxl polib python-pptx chardet 'jsonschema>=4.23,<5'
    ```
 
 3. **设置两个路径变量**（每个新终端；或写入 shell profile）：
@@ -184,6 +184,7 @@ v1.4.1 及更早版本的 epub 解析用 `soup.get_text(strip=True)` 抽文本�
   - 找不到时，在 AiNiee 应用的设置/数据目录里定位 `config.json`。
 - `--analysis` 可省略（无项目分析时跳过），形如 `.../ProjectCache/<project_id>/AinieeCacheData.json`。
 - 生成后，**必须人工 review 并锁定**：检查人名分类（是否保留原文）、地名/种族译法、音译唯一性。复核时特别注意：自动清洗按姓氏末词归并同一角色，可能把**同姓的不同角色**误并为一条——检查每条的 aliases 里没有混入另一个人。
+- 默认用 [校对工作台](references/review_workbench.md)逐项复核；有真实建议表再传 `--proposals`，没有则保留无建议状态，支持手动修改或留言。
 - 锁定表格式：
 
 ```json

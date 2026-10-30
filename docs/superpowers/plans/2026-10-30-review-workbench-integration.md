@@ -1,6 +1,6 @@
 # AiNiee 校对工作台实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 让本机 AiNiee 技能通过通用工作台完成术语表和微信读书反馈校对。
 
@@ -32,10 +32,10 @@
 
 **Interfaces:** `runtime()` 返回上游模块入口；`prepare_project(output, package, binding)` 创建独立审核项目；`load_project(project)` 验证 Git/材料/映射；`compare_project(project, targets)` 返回工作台比较结果。
 
-- [ ] 先写测试：包有 Git 基准且不改业务 HEAD；草稿不出现比较结果；篡改 binding 拒绝。
-- [ ] 运行新测试，确认模块缺失而失败。
-- [ ] 附带上游运行包、schemas、web 与许可；桥接层用冻结 scope 绑定映射，不修改上游提交语义。
-- [ ] 运行 `pytest 测试/单元/test_workbench.py`，预期通过；提交本任务。
+- [x] 先写测试：包有 Git 基准且不改业务 HEAD；草稿不出现比较结果；篡改 binding 拒绝。
+- [x] 运行新测试，确认模块缺失而失败。
+- [x] 附带上游运行包、schemas、web 与许可；桥接层用冻结 scope 绑定映射，不修改上游提交语义。
+- [x] 运行 `pytest 测试/单元/test_workbench.py`，预期通过；提交本任务。
 
 ## Task 2: 术语表材料与受控写回
 
@@ -43,9 +43,9 @@
 
 **Interfaces:** `prepare_glossary(locked, output, proposals=None)`；`glossary_targets(binding, locked)`；`apply_glossary(project, locked, instruction)`。
 
-- [ ] 测试先行：接受、保留、编辑、评论；只消费正式提交；保留未知字段和他条变化；身份漂移/冲突/Schema 拒绝；重跑无重复写入；缺建议不伪造 proposal。
-- [ ] 运行测试观察缺失行为；实现索引+原词身份、字段投影、锁内 compare/备份/原子写入。
-- [ ] 运行 `pytest 测试/单元/test_workbench*.py`，预期通过；提交本任务。
+- [x] 测试先行：接受、保留、编辑、评论；只消费正式提交；保留未知字段和他条变化；身份漂移/冲突/Schema 拒绝；重跑无重复写入；缺建议不伪造 proposal。
+- [x] 运行测试观察缺失行为；实现索引+原词身份、字段投影、锁内 compare/备份/原子写入。
+- [x] 运行 `pytest 测试/单元/test_workbench*.py`，预期通过；提交本任务。
 
 ## Task 3: 微信读书材料与既有事务接通
 
@@ -53,17 +53,17 @@
 
 **Interfaces:** `prepare_reading(round_dir, cache, output, report_revision=None)`；`reading_targets(binding, cache)`；`apply_reading(project, cache, instruction)`。
 
-- [ ] 测试先行：推荐转正式决定并用既有 writer 写回；逐段手动编辑保留段内换行；评论不写；过期评估/意见/当前稿拒绝；重跑幂等；重叠 segment 不同结果拒绝；冻结映射篡改拒绝。
-- [ ] 实现完整 issue/report/edition/segment 绑定、原文想法候选 evidence、逐 block 决定、稳定 decision_id、业务 CAS；评论进入返回的 needs_agent。
-- [ ] 运行新适配测试与现有 reading 测试，预期通过；提交本任务。
+- [x] 测试先行：推荐转正式决定并用既有 writer 写回；逐段手动编辑保留段内换行；评论不写；过期评估/意见/当前稿拒绝；重跑幂等；重叠 segment 不同结果拒绝；冻结映射篡改拒绝。
+- [x] 实现完整 issue/report/edition/segment 绑定、原文想法候选 evidence、逐 block 决定、稳定 decision_id、业务 CAS；评论进入返回的 needs_agent。
+- [x] 运行新适配测试与现有 reading 测试，预期通过；提交本任务。
 
 ## Task 4: 技能路由、视觉与安装验收
 
 **Files:** 修改 `skills/ainiee-translate/SKILL.md`、`references/weread_proofreading.md`，新增 `references/review_workbench.md`，更新 `commands/glossary.md`、`commands/reading-review.md`；更新 bundle；验收文档 `docs/review-workbench-validation.md`。
 
-- [ ] 更新技能前，独立行为检查记录当前文档仍只指向旧静态报告的缺口；更新后用相同场景复核路由与提交边界。
-- [ ] 用 `local/reading-projects/oxygen-live` 的真实副本创建两类工作台；不虚构或提交真实用户决定。
-- [ ] 上游界面仅必要局部补丁：AiNiee 标识、业务说明；正文保留上游阅读布局和 tokens，注释记录内容层级与变量约束。
-- [ ] 启动实际服务，查看 1280/375 截图并操作保存、恢复、提交（正式提交仅隔离合成演练），记录视觉审核和限制。
-- [ ] 相关回归、全套现有测试、上游运行测试、`build.py --check`、独立打包入口校验；独立全分支代码审阅并修复重要问题。
-- [ ] 本机技能更新前备份到 local；安装后从中立目录验证 CLI。只保留本地提交与验收资料。
+- [x] 更新技能前，独立行为检查记录当前文档仍只指向旧静态报告的缺口；更新后用相同场景复核路由与提交边界。
+- [x] 用 `local/reading-projects/oxygen-live` 的真实副本创建两类工作台；不虚构或提交真实用户决定。
+- [x] 上游界面仅必要局部补丁：AiNiee 标识、业务说明；正文保留上游阅读布局和 tokens，注释记录内容层级与变量约束。
+- [x] 启动实际服务，查看 1280/375 截图并操作保存、恢复、提交（正式提交仅隔离合成演练），记录视觉审核和限制。
+- [x] 相关回归、全套现有测试、上游运行测试、`build.py --check`、独立打包入口校验；独立全分支代码审阅并修复重要问题。
+- [x] 本机技能更新前备份到 local；安装后从中立目录验证 CLI。只保留本地提交与验收资料。

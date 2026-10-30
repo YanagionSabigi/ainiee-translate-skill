@@ -66,6 +66,8 @@ def validate_package(data, root=None):
         for key, values in item['facets'].items():
             if key not in facets or not set(values) <= facets[key]: raise ReviewError('筛选值不存在')
         expected = {b['id']: b['type'] for b in item['before']}
+        if any(expected.get(key) != 'text' for key in item.get('allow_empty_blocks', [])):
+            raise ReviewError('可空字段必须是本项文本内容块')
         for version in ('before', 'baseline', 'proposal', 'evidence'):
             blocks = item.get(version) or []
             if len({b['id'] for b in blocks}) != len(blocks): raise ReviewError('内容块编号重复')
@@ -111,7 +113,8 @@ def resolve_decision(item, draft):
                     raise ReviewError('表格结构不合法')
                 b['rows']=value
             else:
-                if not isinstance(value,str) or not value.strip(): raise ReviewError('修改内容不能为空')
+                if not isinstance(value,str) or (not value.strip() and b['id'] not in item.get('allow_empty_blocks',[])):
+                    raise ReviewError('修改内容不能为空')
                 b['text']=value
         result['blocks']=blocks
     elif mode=='comment':

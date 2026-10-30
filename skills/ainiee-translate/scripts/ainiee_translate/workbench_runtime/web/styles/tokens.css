@@ -1,0 +1,30 @@
+:root {
+  color-scheme: light;
+  --paper: hsl(40 25% 98%);
+  --surface: #fff;
+  --ink: hsl(160 12% 16%);
+  --muted: hsl(150 5% 39%);
+  --line: hsl(40 12% 87%);
+  --soft: hsl(40 20% 95%);
+  --action: hsl(164 43% 27%);
+  --action-soft: hsl(164 30% 94%);
+  --blue: hsl(210 52% 35%);
+  --blue-soft: hsl(210 58% 95%);
+  --red: hsl(3 53% 37%);
+  --red-soft: hsl(3 55% 96%);
+  --green: hsl(153 42% 29%);
+  --green-soft: hsl(153 36% 94%);
+  --radius: 8px;
+  --font-ui: "Segoe UI", "Microsoft YaHei", sans-serif;
+  --font-text: "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  --text-small: 12px;
+  --text-ui: 14px;
+  --text-body: 18px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+}

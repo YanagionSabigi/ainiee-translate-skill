@@ -1,0 +1,345 @@
+{
+  "schema_version": "1",
+  "package_id": "reading-demo",
+  "title": "阅读材料校对",
+  "base_commit": null,
+  "groups": [
+    {
+      "id": "language",
+      "title": "文本修订"
+    },
+    {
+      "id": "terms",
+      "title": "术语与命名"
+    },
+    {
+      "id": "recognition",
+      "title": "识别与还原"
+    }
+  ],
+  "facets": [
+    {
+      "id": "content",
+      "title": "内容",
+      "options": [
+        {
+          "id": "image",
+          "title": "含源图"
+        },
+        {
+          "id": "formula",
+          "title": "含公式"
+        },
+        {
+          "id": "table",
+          "title": "含表格"
+        }
+      ]
+    },
+    {
+      "id": "topic",
+      "title": "关注点",
+      "options": [
+        {
+          "id": "style",
+          "title": "语言风格"
+        },
+        {
+          "id": "math",
+          "title": "数学领域"
+        }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "formula",
+      "path": "assets/formula.svg",
+      "media_type": "image/svg+xml",
+      "full_asset_id": "page",
+      "page": 68,
+      "width": 800,
+      "height": 320
+    },
+    {
+      "id": "page",
+      "path": "assets/page.svg",
+      "media_type": "image/svg+xml",
+      "page": 68,
+      "width": 900,
+      "height": 1200
+    },
+    {
+      "id": "chart",
+      "path": "assets/chart.svg",
+      "media_type": "image/svg+xml",
+      "page": 31,
+      "width": 800,
+      "height": 360
+    }
+  ],
+  "items": [
+    {
+      "id": "TXT-014",
+      "target_id": "paragraph-42",
+      "group_id": "language",
+      "facets": {
+        "topic": [
+          "style"
+        ]
+      },
+      "requires_human": false,
+      "before": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "这项研究显著提升了我们对于这一现象的理解，并提供了一个全新的视角。"
+        }
+      ],
+      "baseline": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "这项研究显著提升了我们对于这一现象的理解，并提供了一个全新的视角。"
+        }
+      ],
+      "proposal": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "这项研究加深了我们对这一现象的理解，也提供了一个新的观察角度。"
+        }
+      ],
+      "evidence": [],
+      "rationale": "原文未强调提升幅度。“显著”与“全新”增加了原文没有的判断。",
+      "location": "第三章 · § 3.2 · 第 42 段",
+      "context": "This study improves our understanding of the phenomenon and offers a new perspective."
+    },
+    {
+      "id": "OCR-008",
+      "target_id": "formula-4-1",
+      "group_id": "recognition",
+      "facets": {
+        "content": [
+          "image",
+          "formula"
+        ],
+        "topic": [
+          "math"
+        ]
+      },
+      "requires_human": true,
+      "before": [
+        {
+          "id": "body",
+          "type": "tex",
+          "text": "\\int_{-\\infty}^{\\infty} e^{-x}\\,dx=\\sqrt{\\pi}"
+        }
+      ],
+      "baseline": [
+        {
+          "id": "body",
+          "type": "tex",
+          "text": "\\int_{-\\infty}^{\\infty} e^{-x}\\,dx=\\sqrt{\\pi}"
+        }
+      ],
+      "proposal": [
+        {
+          "id": "body",
+          "type": "tex",
+          "text": "\\int_{-\\infty}^{\\infty} e^{-x^2}\\,dx=\\sqrt{\\pi}"
+        }
+      ],
+      "evidence": [
+        {
+          "id": "source",
+          "type": "image",
+          "asset_id": "formula"
+        }
+      ],
+      "rationale": "指数识别可能丢失平方，请对照源图确认。",
+      "location": "第四章 · 物理页 68 · 公式 (4.1)"
+    },
+    {
+      "id": "TERM-003",
+      "target_id": "term-compactness",
+      "group_id": "terms",
+      "facets": {
+        "topic": [
+          "math"
+        ]
+      },
+      "requires_human": false,
+      "before": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "紧性"
+        }
+      ],
+      "baseline": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "紧性"
+        }
+      ],
+      "proposal": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "紧致性"
+        }
+      ],
+      "evidence": [
+        {
+          "id": "source",
+          "type": "text",
+          "text": "compactness"
+        }
+      ],
+      "rationale": "与本项目“紧致空间”的用语保持一致。",
+      "location": "compactness"
+    },
+    {
+      "id": "OCR-011",
+      "target_id": "figure-2",
+      "group_id": "recognition",
+      "facets": {
+        "content": [
+          "image"
+        ]
+      },
+      "requires_human": false,
+      "before": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "实线表示基准值，虚线表示观测值。"
+        }
+      ],
+      "baseline": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "实线表示基准值，虚线表示观测值。"
+        }
+      ],
+      "proposal": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "实线表示观测值，虚线表示基准值。"
+        }
+      ],
+      "evidence": [
+        {
+          "id": "source",
+          "type": "image",
+          "asset_id": "chart"
+        }
+      ],
+      "rationale": "核对 observed 与 baseline 的图例对应关系。",
+      "location": "第二章 · 物理页 31 · 图 2"
+    },
+    {
+      "id": "TABLE-002",
+      "target_id": "table-2",
+      "group_id": "recognition",
+      "facets": {
+        "content": [
+          "table"
+        ]
+      },
+      "requires_human": false,
+      "before": [
+        {
+          "id": "table",
+          "type": "table",
+          "rows": [
+            [
+              "名称",
+              "读数"
+            ],
+            [
+              "样本 A",
+              "1.2"
+            ],
+            [
+              "样本 B",
+              "2.0"
+            ]
+          ]
+        }
+      ],
+      "baseline": [
+        {
+          "id": "table",
+          "type": "table",
+          "rows": [
+            [
+              "名称",
+              "读数"
+            ],
+            [
+              "样本 A",
+              "1.2"
+            ],
+            [
+              "样本 B",
+              "2.0"
+            ]
+          ]
+        }
+      ],
+      "proposal": [
+        {
+          "id": "table",
+          "type": "table",
+          "rows": [
+            [
+              "名称",
+              "读数"
+            ],
+            [
+              "样本 A",
+              "1.7"
+            ],
+            [
+              "样本 B",
+              "2.0"
+            ]
+          ]
+        }
+      ],
+      "evidence": [],
+      "rationale": "示例：OCR 对小数位的识别修订。",
+      "location": "附表 · 第 2 行"
+    },
+    {
+      "id": "OCR-019",
+      "target_id": "ambiguous-word",
+      "group_id": "recognition",
+      "facets": {},
+      "requires_human": true,
+      "before": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "此处扫描文字无法确定。"
+        }
+      ],
+      "baseline": [
+        {
+          "id": "body",
+          "type": "text",
+          "text": "此处扫描文字无法确定。"
+        }
+      ],
+      "proposal": null,
+      "evidence": [],
+      "rationale": "缺少足够证据，需要人工补充判断或提出进一步处理要求。",
+      "location": "第五章 · 物理页 93 · 第 8 行"
+    }
+  ]
+}

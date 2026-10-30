@@ -1,5 +1,6 @@
 """Freeze business projections alongside the offline review-workbench runtime."""
 import copy
+from contextlib import contextmanager
 import importlib
 import json
 from pathlib import Path
@@ -52,13 +53,80 @@ def load_project(project):
             or binding.get('schema') != 'ainiee-workbench/1'
             or binding.get('package_id') != store.package['package_id']):
         raise ValueError('业务映射 binding 与冻结 Git 基准不一致')
+    with store.lock():
+        validate_submissions(store)
     return store, binding
+
+
+def validate_submissions(store):
+    """Local files have the same trust boundary as returned review results."""
+    rt = runtime()
+    submissions = store.submissions()
+    by_id = {s.get('submission_id'): s for s in submissions}
+    if len(by_id) != len(submissions):
+        raise ValueError('提交编号重复')
+    items = {i['id']: i for i in store.package['items']}
+    edges = {}
+    for s in submissions:
+        rt.model.validate_schema(s, 'submission')
+        if (s['package_id'], s['base_commit']) != (store.package['package_id'], store.package['base_commit']):
+            raise ValueError('提交的审核包或 Git 基准不匹配')
+        if len({d['item_id'] for d in s['decisions']}) != len(s['decisions']):
+            raise ValueError('提交包含重复条目')
+        for d in s['decisions']:
+            item = items.get(d['item_id'])
+            if item is None:
+                raise ValueError('提交包含未知条目')
+            draft = dict(mode=d['action'], comment=d.get('instruction', ''), quotes=d.get('quotes', []), touched=True)
+            if d['action'] == 'edit':
+                draft['edits'] = {b['id']: b.get('rows') if b['type'] == 'table' else b.get('text')
+                                  for b in d['blocks'] if b['type'] != 'image'}
+            if rt.model.resolve_decision(item, draft) != d:
+                raise ValueError('提交决定与冻结展示内容不一致')
+        edges[s['submission_id']] = set()
+        for ref in s.get('resolves', []):
+            prior = by_id.get(ref['submission_id'])
+            if (prior is None or prior is s
+                    or not any(d['target_id'] == ref['target_id'] for d in prior['decisions'])
+                    or not any(d['target_id'] == ref['target_id'] for d in s['decisions'])):
+                raise ValueError('冲突解决引用无效')
+            edges[s['submission_id']].add(ref['submission_id'])
+    visiting, visited = set(), set()
+    def visit(key):
+        if key in visiting:
+            raise ValueError('冲突解决引用形成循环')
+        if key in visited:
+            return
+        visiting.add(key)
+        for parent in edges[key]:
+            visit(parent)
+        visiting.remove(key)
+        visited.add(key)
+    for key in edges:
+        visit(key)
+    return submissions
+
+
+@contextmanager
+def submitted_comparison(project, targets):
+    """Prevent a later human submission from invalidating an in-flight write."""
+    store, _ = load_project(project)
+    rt = runtime()
+    with store.lock():
+        history = rt.storage.fingerprint(validate_submissions(store))
+    comparison = compare_project(project, targets)
+    with store.lock():
+        store._assert_frozen()
+        if rt.storage.fingerprint(validate_submissions(store)) != history:
+            raise ValueError('比较后人工提交已更新，请重新比较')
+        yield comparison
 
 
 def compare_project(project, targets):
     store, _ = load_project(project)
     return runtime().gitops.compare(store.root, dict(package_id=store.package['package_id'],
-                                                     base_commit=store.package['base_commit'], targets=targets))
+                                                     base_commit=store.package['base_commit'], targets=targets),
+                                    diff_dir=store.root)
 
 
 def package(title, groups):

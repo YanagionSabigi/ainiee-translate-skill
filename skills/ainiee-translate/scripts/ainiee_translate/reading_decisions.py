@@ -11,10 +11,10 @@ def _decision(round_dir,did):
     return read(child(round_dir,f'decisions/{did}.json'))['decisions'][0]
 
 
-def record_decisions(round_dir,decisions):
+def record_decisions(round_dir,decisions,*,resume=False):
     with round_lock(round_dir):
         r=load_round(round_dir); issues=load_issues(round_dir); idx={i['issue_id']:i for i in issues['issues']}
-        pending=[]
+        pending=[]; known=[]
         for supplied in decisions.get('decisions',[]):
             d=copy.deepcopy(supplied); iid=d.get('issue_id'); issue=idx.get(iid)
             if issue is None: raise ValueError('Use the full stable issue ID in structured decisions')
@@ -57,12 +57,19 @@ def record_decisions(round_dir,decisions):
                 raise ValueError('Selected text differs from the displayed candidate')
             did=d.get('decision_id') or revision()
             d.update(decision_id=did,selected_text=selected_text,expected_segments=expected)
-            if child(round_dir,f'decisions/{did}.json').exists(): raise ValueError('Decision ID already exists')
+            if child(round_dir,f'decisions/{did}.json').exists():
+                if not resume or _decision(round_dir,did)!=d:
+                    raise ValueError('Decision ID already exists or differs')
+                if did in issue.get('decision_ids',[]):
+                    known.append(d); continue
             pending.append(d)
-        if not pending: raise ValueError('No decisions')
+        if not pending:
+            if known: return record('reading-decisions/1',r,decisions=known)
+            raise ValueError('No decisions')
         if len({d['decision_id'] for d in pending})!=len(pending): raise ValueError('Duplicate decision IDs')
         for d in pending:
-            immutable(round_dir,'decisions',d['decision_id'],record('reading-decisions/1',r,decisions=[d]))
+            if not child(round_dir,f"decisions/{d['decision_id']}.json").exists():
+                immutable(round_dir,'decisions',d['decision_id'],record('reading-decisions/1',r,decisions=[d]))
             issue=idx[d['issue_id']]
             previous=issue.get('active_decision_id')
             if previous:

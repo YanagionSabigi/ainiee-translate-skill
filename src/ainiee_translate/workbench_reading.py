@@ -10,7 +10,7 @@ from .reading_round import (load_round, load_issues, load_segments, current_item
 from .reading_report import render_report, STATES
 from .reading_decisions import record_decisions, apply_decisions
 from .workbench_bridge import (block, package, prepare_project, load_project, compare_project,
-                               instruction_text, application_lock)
+                               instruction_text, application_lock, submitted_comparison)
 
 
 def _parts(shown, frozen):
@@ -110,58 +110,65 @@ def apply_reading(project, cache, instruction):
         report = read(child(rd, f"reports/{binding['report_revision']}.json"))
         if digest(report) != binding['report_hash']:
             raise ValueError('原报告已改变')
-        comparison = compare_project(project, reading_targets(binding, cache))
-        # Runtime target IDs cover equal segment sets. Also reject conflicting
-        # decisions on partially overlapping sets before the first business write.
-        desired = {}
-        for entry in comparison['items']:
-            if entry['action'] == 'comment':
-                continue
-            info = binding['items'][entry['item_id']]
-            for s, b in zip(info['parts'], entry['decision']['blocks']):
-                desired.setdefault(s['segment_id'], []).append((entry, b['text']))
-        for values in desired.values():
-            if len({text for _, text in values}) > 1:
-                for entry, _ in values:
-                    entry['status'] = 'conflict'
-        result = dict(applied=0, kept=0, conflicts=0, needs_agent=[], results=[])
-        for entry in comparison['items']:
-            if entry['status'] == 'needs_agent':
-                result['needs_agent'].append(entry)
-                continue
-            info = binding['items'][entry['item_id']]
-            shown = info['shown']
-            r = load_round(rd)
-            issues = {i['issue_id']: i for i in load_issues(rd)['issues']}
-            if entry['status'] in ('conflict', 'missing_current') or _stale(binding, info, r, issues):
-                result['conflicts'] += 1
-                result['results'].append(dict(item_id=entry['item_id'], result='conflict_or_stale'))
-                continue
-            did = uuid.uuid5(uuid.NAMESPACE_URL,
-                             f"{binding['package_id']}:{entry['submission_id']}:{entry['item_id']}").hex
-            action = {'accept': 'accept', 'keep': 'keep', 'edit': 'custom'}[entry['action']]
-            decision = dict(issue_id=entry['item_id'], action=action, decision_id=did,
-                            report_revision=binding['report_revision'], assessment_revision=shown['assessment_revision'],
-                            annotation_revision=shown['annotation_revision'],
-                            human_instruction=instruction['human_instruction'] + '\n网页正式提交：' + entry['action'],
-                            human_reference=str((store.root / 'submissions' / (entry['submission_id'] + '.json')).resolve())
-                                            + '\n' + instruction['human_reference'])
-            if action == 'custom':
-                values = {b['id']: b['text'] for b in entry['decision']['blocks']}
-                decision['edits'] = [dict(segment_id=s['segment_id'], replacement_text=values[bid])
-                                     for bid, s in zip(info['block_ids'], info['parts'])]
-                decision['selected_text'] = '\n'.join(e['replacement_text'] for e in decision['edits'])
-            try:
-                if not child(rd, f'decisions/{did}.json').exists():
-                    record_decisions(rd, dict(schema='reading-decisions/1', decisions=[decision]))
-                if action == 'keep':
-                    result['kept'] += 1
-                else:
-                    applied = apply_decisions(rd, cache, decision_ids=[did])
-                    result['applied'] += applied['applied']
-                    result['conflicts'] += applied['conflicts']
-                result['results'].append(dict(item_id=entry['item_id'], decision_id=did, result='processed'))
-            except ValueError as exc:
-                result['conflicts'] += 1
-                result['results'].append(dict(item_id=entry['item_id'], result='conflict', reason=str(exc)))
-        return result
+        with submitted_comparison(project, reading_targets(binding, cache)) as comparison:
+            return _consume(cache, instruction, store, binding, comparison)
+
+
+def _consume(cache, instruction, store, binding, comparison):
+    rd = Path(binding['round'])
+    # Runtime target IDs cover equal segment sets. Also reject conflicting
+    # decisions on partially overlapping sets before the first business write.
+    desired = {}
+    for entry in comparison['items']:
+        if entry['action'] == 'comment':
+            continue
+        info = binding['items'][entry['item_id']]
+        for s, b in zip(info['parts'], entry['decision']['blocks']):
+            desired.setdefault(s['segment_id'], []).append((entry, b['text']))
+    for values in desired.values():
+        if len({text for _, text in values}) > 1:
+            for entry, _ in values:
+                entry['status'] = 'conflict'
+    result = dict(applied=0, kept=0, conflicts=0, needs_agent=[], results=[])
+    for entry in comparison['items']:
+        if entry['status'] == 'needs_agent':
+            result['needs_agent'].append(entry)
+            continue
+        info = binding['items'][entry['item_id']]
+        shown = info['shown']
+        r = load_round(rd)
+        issues = {i['issue_id']: i for i in load_issues(rd)['issues']}
+        if entry['status'] in ('conflict', 'missing_current') or _stale(binding, info, r, issues):
+            result['conflicts'] += 1
+            result['results'].append(dict(item_id=entry['item_id'], result='conflict_or_stale'))
+            continue
+        did = uuid.uuid5(uuid.NAMESPACE_URL,
+                         f"{binding['package_id']}:{entry['submission_id']}:{entry['item_id']}").hex
+        action = {'accept': 'accept', 'keep': 'keep', 'edit': 'custom'}[entry['action']]
+        decision = dict(issue_id=entry['item_id'], action=action, decision_id=did,
+                        report_revision=binding['report_revision'], assessment_revision=shown['assessment_revision'],
+                        annotation_revision=shown['annotation_revision'],
+                        human_instruction=instruction['human_instruction'] + '\n网页正式提交：' + entry['action'],
+                        human_reference=str((store.root / 'submissions' / (entry['submission_id'] + '.json')).resolve())
+                                        + '\n' + instruction['human_reference'])
+        if action == 'custom':
+            values = {b['id']: b['text'] for b in entry['decision']['blocks']}
+            decision['edits'] = [dict(segment_id=s['segment_id'], replacement_text=values[bid])
+                                 for bid, s in zip(info['block_ids'], info['parts'])]
+            decision['selected_text'] = '\n'.join(e['replacement_text'] for e in decision['edits'])
+        try:
+            existing = child(rd, f'decisions/{did}.json')
+            if existing.exists():
+                decision = read(existing)['decisions'][0]
+            record_decisions(rd, dict(schema='reading-decisions/1', decisions=[decision]), resume=True)
+            if action == 'keep':
+                result['kept'] += 1
+            else:
+                applied = apply_decisions(rd, cache, decision_ids=[did])
+                result['applied'] += applied['applied']
+                result['conflicts'] += applied['conflicts']
+            result['results'].append(dict(item_id=entry['item_id'], decision_id=did, result='processed'))
+        except ValueError as exc:
+            result['conflicts'] += 1
+            result['results'].append(dict(item_id=entry['item_id'], result='conflict', reason=str(exc)))
+    return result

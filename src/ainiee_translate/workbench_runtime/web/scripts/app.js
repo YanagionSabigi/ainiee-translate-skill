@@ -50,6 +50,7 @@ function texValid(text) {
 const backupKey = () => `review-backup:${state.package.package_id}`;
 function notify(message, actions = []) {
   const n = $("#notice");
+  n.dataset.tone = message.startsWith("本轮决定已") ? "success" : "error";
   n.replaceChildren(
     el("span", {}, message),
     ...actions.map(([label, fn]) => el("button", { onclick: fn }, label)),
@@ -77,7 +78,7 @@ function effective(i) {
         b.type === "table"
           ? Array.isArray(d.edits?.[b.id]) && d.edits[b.id].length
           : typeof d.edits?.[b.id] === "string" &&
-            d.edits[b.id].trim() &&
+            (d.edits[b.id].trim() || (i.allow_empty_blocks ?? []).includes(b.id)) &&
             (b.type !== "tex" || texValid(d.edits[b.id])),
       )
     );
@@ -502,6 +503,9 @@ function assetUrl(id) {
 }
 function blockNode(b, i, version, paired) {
   const wrapper = el("div", { class: "block" });
+  const names = { dst: "译名", render: "人物译名", aliases: "别名", note: "说明", category: "分类", gender: "性别", keep_source: "保留原文" };
+  if (version !== "evidence" && names[b.id])
+    wrapper.append(el("div", { class: "field-label" }, names[b.id]));
   if (b.type === "text") {
     const text = el("div", {
       class: "text-source",
@@ -552,26 +556,35 @@ function blockNode(b, i, version, paired) {
 }
 function sourceEvidence(i) {
   if (!i.evidence.length) return null;
+  const notes = i.evidence.filter((b) => /^(excerpt|thought-|unlinked-)/.test(b.id));
+  const references = i.evidence.filter((b) => !notes.includes(b));
   const body = el(
     "div",
     { class: "evidence-body" },
-    i.evidence.map((b) => blockNode(b, i, "evidence")),
+    references.map((b) => blockNode(b, i, "evidence")),
   );
-  return el(
+  const details = el(
     "details",
     {
       class: "evidence",
       open: i.evidence.some((b) => b.type === "image") ? "" : null,
     },
-    [el("summary", {}, "源材料"), body],
+    [el("summary", {}, "原文、候选与核验依据"), body],
   );
+  if (!notes.length) return details;
+  return el("div", {}, [
+    el("section", { class: "reading-notes", "aria-label": "微信阅读反馈" },
+      notes.map((b) => blockNode(b, i, "evidence"))),
+    details,
+  ]);
 }
 function makeEditor(i) {
   const d = itemDraft(i),
     section = el("div", { class: "editor-host" });
   if (d.mode === "edit") {
     for (const b of editable(i)) {
-      const label = `${b.type === "tex" ? "TeX" : b.type === "table" ? "表格" : "手动修改"}${editable(i).length > 1 ? " · " + b.id : ""}`;
+      const labels = { dst: "译名", render: "人物译名", aliases: "别名（每行一项）", note: "说明", category: "分类", gender: "性别", keep_source: "保留原文（是 / 否）" };
+      const label = labels[b.id] ?? `${b.type === "tex" ? "TeX" : b.type === "table" ? "表格" : "手动修改"}${editable(i).length > 1 ? " · " + b.id.replace("segment-", "第 ") + " 段" : ""}`;
       const edit = el(
         "div",
         { class: "editor" },
@@ -686,7 +699,7 @@ function article(i) {
   if (evidence) article.append(evidence);
   const panels = el("div", { class: "comparison" });
   for (const [version, title] of [
-    ["before", "原版"],
+    ["before", "当前版本"],
     ["proposal", "建议版本"],
   ]) {
     const blocks = i[version];
@@ -734,7 +747,7 @@ function article(i) {
     });
   for (const [mode, title] of [
     ["accept", "接受建议"],
-    ["keep", "保留原版"],
+    ["keep", "保留当前版本"],
     ["edit", "手动修改"],
     ["comment", "提出修改意见"],
   ]) {
@@ -936,7 +949,7 @@ async function submit() {
           remoteRevision = drafts.revision;
           closeModal();
           render(true);
-          notify("本轮决定已保存。可回到聊天让 agent 继续。", [
+          notify("本轮决定已提交。请回到聊天说“继续”，开始核验写回。", [
             ["关闭", clearNotice],
           ]);
         },

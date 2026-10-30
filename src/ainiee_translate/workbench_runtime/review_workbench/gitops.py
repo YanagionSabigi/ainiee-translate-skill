@@ -113,8 +113,8 @@ def text_of(blocks):
     return '\n'.join((b.get('text') if b['type'] in ('text','tex') else json.dumps(b.get('rows') if b['type']=='table' else {'asset_id':b['asset_id']},ensure_ascii=False,sort_keys=True)) for b in blocks)
 
 
-def git_diff(before,after):
-    with tempfile.TemporaryDirectory(prefix='review-diff-') as tmp:
+def git_diff(before,after,*,temp_dir=None):
+    with tempfile.TemporaryDirectory(prefix='review-diff-',dir=temp_dir) as tmp:
         a=Path(tmp)/'base.txt';b=Path(tmp)/'result.txt';a.write_text(text_of(before),encoding='utf-8');b.write_text(text_of(after),encoding='utf-8')
         result=subprocess.run(['git','diff','--no-index','--no-ext-diff','--no-textconv','--',str(a),str(b)],capture_output=True)
         if result.returncode not in (0,1):raise ReviewError('Git diff 执行失败')
@@ -122,7 +122,7 @@ def git_diff(before,after):
         return '\n'.join(line for line in lines if not line.startswith(('diff --git','index ','--- ','+++ ')))
 
 
-def compare(root,current):
+def compare(root,current,*,diff_dir=None):
     from .history import active_entries,signature
     store=Store(root);data=store.package
     verify_baseline(root,data)
@@ -151,7 +151,7 @@ def compare(root,current):
                 probe['items'][0]['proposal']=actual;validate_package(probe,root)
                 entry['current']=actual
                 entry['status']='satisfied' if actual==desired else 'ready' if actual==base else 'conflict'
-                entry['diff']=git_diff(actual,desired)
+                entry['diff']=git_diff(actual,desired,**({'temp_dir':diff_dir} if diff_dir is not None else {}))
                 prior=seen.setdefault(target,[])
                 if any(p['blocks']!=desired for p in prior):
                     conflicts.append({'target_id':target,'reason':'different_human_decisions','submission_ids':list(dict.fromkeys([p['submission_id'] for p in prior]+[submission['submission_id']]))})

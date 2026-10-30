@@ -601,6 +601,14 @@
           },
           "context": {
             "type": "string"
+          },
+          "allow_empty_blocks": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
+            },
+            "uniqueItems": true
           }
         },
         "required": [

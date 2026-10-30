@@ -45,7 +45,7 @@ sync 与 import-notes 走相同规范化和历史管道，沿用编号；修改�
 
 已有项目的阅读 EPUB 若按原出版规则省略部分单元，freeze 可额外给 `--scope <reading-scope.json>`。该文件必须以 `schema:reading-scope/1`、`cache_sha256`、`epub_sha256` 绑定精确版本，并给 `omitted_units:{unit_id:既有规则说明}` 和 `evidence_reference`；只记录已核验的既有规则，不能用它掩盖错书或缺段。冻结缓存保持完整。
 
-## Agent 辨析与 HTML
+## Agent 辨析与校对工作台
 
 ```text
 <PFX> -m ainiee_translate.reading tasks --round <ROUND> --cache <cache> --out <tasks.json>
@@ -63,7 +63,9 @@ EPUB 证据给 `kind:epub,href,observations`；PDF 每条要实际打开对应�
 
 向用户打开实际生成的 HTML，说明当前 round 和 report_revision。桌面表格展示状态、原文/上下文、当前译文、全部想法、候选、确切推荐与差异；长文和审计可展开。保留旧报告，不用重建后的新推荐替代用户看过的文本。
 
-## 聊天批复与写回
+默认把这一确切报告交给 [校对工作台](review_workbench.md)：`workbench reading --round <ROUND> --cache <cache> --out <NEW_PROJECT>`，再 `workbench serve <NEW_PROJECT>`，向用户打开实际 URL。静态 HTML 保留为兼容报告与不可变绑定。网页正式提交后用户回到聊天明确继续，才用 `workbench compare/apply` 核验并消费提交；草稿不消费，留言留待辨析。逐段编辑、版本拒绝和既有事务流程不变，不伪造逐条聊天批准。
+
+## 聊天编号批复与写回（兼容入口）
 
 由 agent 理解聊天并生成结构化文件，**没有自由文本自动授权解析器**。“这个建议似乎更好”等讨论不构成明确批准。固定语义：
 

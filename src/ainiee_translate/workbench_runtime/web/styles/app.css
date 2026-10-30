@@ -430,6 +430,25 @@ main {
 .block + .block {
   margin-top: 24px;
 }
+.field-label {
+  font: var(--text-small)/1.5 var(--font-ui);
+  color: var(--muted);
+  margin-bottom: var(--space-2);
+}
+#notice[data-tone="success"] {
+  color: var(--green);
+  background: var(--green-soft);
+}
+#notice[data-tone="success"] button {
+  color: var(--green);
+  border-color: var(--green);
+}
+/* §3.3.1: preserve the save/submit controls in a narrow header. */
+@media (max-width: 600px) {
+  .brand-product { display: none; }
+  .brand strong, #save-state, .top-actions button { white-space: nowrap; }
+  .top-actions { flex-shrink: 0; }
+}
 del {
   background: var(--red-soft);
   color: var(--red);
@@ -462,6 +481,18 @@ ins {
 }
 .evidence {
   margin-bottom: 24px;
+}
+/* §2.1 / §3.6: the user's reason for reviewing stays visible, with more
+   space around the group than within it; existing tokens carry hierarchy. */
+.reading-notes {
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  border-radius: var(--radius);
+  background: var(--soft);
+}
+.reading-notes .text-source {
+  font: var(--text-ui)/1.8 var(--font-ui);
+  max-width: 35em;
 }
 .evidence summary,
 .source-context summary {
