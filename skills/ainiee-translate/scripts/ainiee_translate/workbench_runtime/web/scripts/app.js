@@ -1,6 +1,7 @@
 import { api } from "./api.js";
 import { el, plain, math, diffText, table } from "./render.js";
 import { restoreBackup, getItemDraft, draftDifferences, draftBlocks } from "./drafts.js";
+import { readingNoteGroups, projectQuote } from "./reading-notes.js";
 
 // Refactoring UI §2.1 / §3.3 / §3.3.1: materials first; directory and
 // queue are optional navigation. Reuse the existing color/type/spacing tokens.
@@ -500,7 +501,7 @@ function assetUrl(id) {
     ? "/assets/" + asset.path.split("/").map(encodeURIComponent).join("/")
     : "";
 }
-function blockNode(b, i, version, paired) {
+function blockNode(b, i, version, paired, projection) {
   const wrapper = el("div", { class: "block" });
   const names = { dst: "译名", render: "人物译名", aliases: "别名", note: "说明", category: "分类", gender: "性别", keep_source: "保留原文" };
   if (version !== "evidence" && names[b.id])
@@ -519,7 +520,8 @@ function blockNode(b, i, version, paired) {
         version === "before" ? paired.text : b.text,
         version,
       );
-    else text.textContent = b.text;
+    else text.textContent = projection?.text ?? b.text;
+    if (projection) text.readingProjection = projection;
     wrapper.append(text);
   } else if (b.type === "tex") {
     const preview = el("div", { class: "math" });
@@ -555,7 +557,8 @@ function blockNode(b, i, version, paired) {
 }
 function sourceEvidence(i) {
   if (!i.evidence.length) return null;
-  const notes = i.evidence.filter((b) => /^(excerpt|thought-|unlinked-)/.test(b.id));
+  const groups = readingNoteGroups(i.evidence);
+  const notes = groups.flatMap(group => group.blocks.map(entry => entry.block));
   const references = i.evidence.filter((b) => !notes.includes(b));
   const body = el(
     "div",
@@ -572,8 +575,12 @@ function sourceEvidence(i) {
   );
   if (!notes.length) return details;
   return el("div", {}, [
-    el("section", { class: "reading-notes", "aria-label": "微信阅读反馈" },
-      notes.map((b) => blockNode(b, i, "evidence"))),
+    el("div", { class: "reading-notes" }, groups.map(group =>
+      el("section", { class: "reading-note", "aria-label": group.title }, [
+        el("h2", { class: "reading-note-title" }, group.title),
+        el("div", { class: "reading-note-body" }, group.blocks.map(({block, projection}) =>
+          blockNode(block, i, "evidence", null, projection))),
+      ]))),
     details,
   ]);
 }
@@ -1228,6 +1235,8 @@ document.addEventListener("mouseup", (e) => {
       .join(""),
     base_commit: state.package.base_commit,
   };
+  if (host.readingProjection)
+    Object.assign(selectionInfo, projectQuote(host.readingProjection, start, start + Array.from(text).length));
   const r = range.getBoundingClientRect();
   $("#quote").style.left =
     Math.min(Math.max(8, r.left), innerWidth - 80) + "px";

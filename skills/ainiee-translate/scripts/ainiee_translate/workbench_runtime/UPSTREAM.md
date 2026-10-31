@@ -12,3 +12,5 @@ AiNiee comparison supplies a private project directory for transient diff text, 
 Portable review export follows upstream slim packaging: no AI skill, examples, Git repository or math assets for plain text.
 
 Upstream version: 0.2.0. Directory toggle uses a contextual sidebar icon. Recipient launchers are copied from templates; old recipient ZIPs must be re-exported.
+
+AiNiee 2.1.3 display patch: separate WeRead excerpt/thought h2 sections, unwrap phone-highlight line wraps with source-mapped quotes; frozen material is unchanged.

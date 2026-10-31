@@ -8,7 +8,7 @@
 
 本项目依赖并继承两个上游项目的成果：[AiNiee](https://github.com/NEKOparapa/AiNiee) 提供基础文件读写、缓存结构及翻译规则，[AiNiee-skill（ainiee-translate-skill）](https://github.com/xuanji86/ainiee-translate-skill) 提供 Agent 翻译技能、提示词与术语表管理、批次工作流和插件基础。本项目在此基础上扩展 PDF 出版与阅读校对；基础运行所需的相关代码和技能文件已随本项目包含，无需为 EPUB / TXT 另外安装上述两个上游项目。
 
-> 当前版本：`v2.1.2`，同步 Review Workbench 0.2.0 的目录侧边栏和离线审核启动入口。核对日期：2026-10-31。
+> 当前版本：`v2.1.3`，优化微信读书选区与想法的标题层级，修复手机划线的显示断行。核对日期：2026-10-31。
 
 ## 可以做什么
 

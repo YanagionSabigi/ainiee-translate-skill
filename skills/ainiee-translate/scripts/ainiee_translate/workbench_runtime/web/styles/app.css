@@ -495,17 +495,37 @@ ins {
 .evidence {
   margin-bottom: 24px;
 }
-/* §2.1 / §3.6: the user's reason for reviewing stays visible, with more
-   space around the group than within it; existing tokens carry hierarchy. */
+/* §2.1 / §2.6 / §3.6: separate h2 sections for the phone excerpt and thoughts;
+   existing type/spacing tokens keep headings distinct from body text. */
 .reading-notes {
-  padding: var(--space-6);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
   margin-bottom: var(--space-6);
+}
+.reading-note {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.reading-note:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.reading-note-title {
+  font: 600 var(--text-body)/1.5 var(--font-ui);
+  margin-bottom: var(--space-3);
+}
+.reading-note-body {
+  flex: 1;
+  padding: var(--space-4) var(--space-6);
   border-radius: var(--radius);
   background: var(--soft);
 }
 .reading-notes .text-source {
   font: var(--text-ui)/1.8 var(--font-ui);
-  max-width: 35em;
+  /* The existing 1040px review card bounds the measure; use its reading width
+     rather than leaving a phone-sized column inside a wide feedback panel. */
+  max-width: none;
 }
 .evidence summary,
 .source-context summary {
@@ -885,6 +905,9 @@ dialog::backdrop {
   }
 }
 @media (max-width: 640px) {
+  .reading-notes {
+    grid-template-columns: 1fr;
+  }
   .topbar {
     padding: 0 16px;
   }

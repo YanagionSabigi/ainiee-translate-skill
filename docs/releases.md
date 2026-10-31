@@ -1,5 +1,7 @@
 # 发布包与 CC Switch
 
+`v2.1.3` 将微信读书的选区和想法拆成二级标题区块，合并手机划线中的段内显示断行并保留空行分段；原始材料和引用定位保持可核对。旧审核 ZIP 需重新导出。验证见 [微信反馈排版修正](weread-layout-validation.md)。
+
 `v2.1.2` 同步工作台 0.2.0 的侧边栏图标、Windows/macOS 启动入口和环境检查，说明见 [0.2.0 同步验收](workbench-020-validation.md)。原有审核 ZIP 需重新导出，不会自动更新。完整技能安装 ZIP 与收件人审核 ZIP 用途不同；通用体验可使用 [上游 0.2.0 演示审核包](https://github.com/YanagionSabigi/review-workbench/releases/download/v0.2.0/review-workbench-demo-0.2.0.zip)。
 
 `v2.1.1` 同步新版工作台，精简交给他人的审核包，提供 export/import-results 入口。审核端不再携带 SKILL、示例、Git 仓库或普通文本不需要的公式资源。验证与启动计时见 [精简审核包验收](portable-review-validation.md)。`v2.1.0` 引入的术语表与微信读书交互校对、草稿恢复、正式提交和受控写回继续保留。此前的 `v2.0.0` 正式版与 `v2.0.0-rc.1` 预发布继续保留。实际 skill 名称及安装目录继续为 `ainiee-translate`，保留既有缓存工具的调用名。
