@@ -1,11 +1,15 @@
+import { adjacentItem, navigationStep } from "./navigation.js";
 import { api } from "./api.js";
 import { el, plain, math, diffText, table } from "./render.js";
 import { restoreBackup, getItemDraft, draftDifferences, draftBlocks } from "./drafts.js";
+import { termPreview, familyItems, familyBatch } from "./glossary.js";
 import { readingNoteGroups, projectQuote } from "./reading-notes.js";
 
 // Refactoring UI §2.1 / §3.3 / §3.3.1: materials first; directory and
 // queue are optional navigation. Reuse the existing color/type/spacing tokens.
 let queueOpen = false;
+let familyPage = 0;
+const openDirectories = new Set(["terms"]);
 
 const $ = (s) => document.querySelector(s),
   PAGE_SIZE = 24;
@@ -17,8 +21,7 @@ let state,
   query = "",
   facets = new Set(),
   page = 0,
-  view = "focus",
-  selected = new Set();
+  view = "focus";
 let dirty = false,
   generation = 0,
   saveTimer,
@@ -267,7 +270,7 @@ function draftPreview(block) {
 function filtered(hold = false) {
   return state.package.items.filter(
     (i) =>
-      (group === "all" || i.group_id === group) &&
+      (group === "all" || i.group_id === group || (group.startsWith("family:") && i.term_info?.base === group.slice(7))) &&
       (!query ||
         [
           i.id,
@@ -303,6 +306,92 @@ function currentPage(hold = true) {
   page = Math.min(page, Math.max(0, Math.ceil(list.length / PAGE_SIZE) - 1));
   return list.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 }
+function previewNode(i) {
+  if (!i.term_info) return el("span", {}, i.location || i.id);
+  const preview = termPreview(i, itemDraft(i));
+  return el("span", {class: "term-preview"}, [
+    el("span", {class: "term-source"}, preview.source),
+    preview.translation ? el("span", {class: "term-translation"}, preview.translation) : null,
+  ]);
+}
+function directoryItem(i) {
+  return el("button", {
+    class: `term-directory-item status-card ${itemState(i)} ${activeId === i.id ? "active" : ""}`,
+    "aria-current": activeId === i.id ? "true" : null,
+    "aria-label": `${i.location} · ${statusName(i)}`,
+    onclick: () => {
+      group = i.term_info?.base ? "family:" + i.term_info.base : i.group_id;
+      // Selecting a directory entry must always reveal it, even with stale filters.
+      query = ""; status = "all"; facets.clear(); $("#search").value = "";
+      const list = filtered(true);
+      activeId = i.id; page = Math.floor(list.indexOf(i) / PAGE_SIZE);
+      familyPage = Math.floor(familyItems(list, i.term_info?.base).indexOf(i) / PAGE_SIZE);
+      render(true);
+    },
+  }, [previewNode(i), el("span", {class: "small"}, statusName(i))]);
+}
+function glossaryDirectory(p, side) {
+  const nav = el("nav", {class: "nav glossary-directory", "aria-label": "主目录"});
+  nav.append(el("button", {onclick: () => {group = "all"; page = 0; activeId = null; render();}}, "全部材料"));
+  for (const g of p.groups) {
+    const members = p.items.filter(i => i.group_id === g.id);
+    if (!members.length) continue;
+    const section = el("details", {open: openDirectories.has(g.id) ? "" : null,
+      ontoggle: e => e.target.open ? openDirectories.add(g.id) : openDirectories.delete(g.id)},
+      el("summary", {}, `${g.title} · ${members.length}`));
+    const children = el("div", {class: "directory-children"});
+    for (const i of members.filter(i => !i.term_info?.base)) children.append(directoryItem(i));
+    const bases = [...new Set(members.map(i => i.term_info?.base).filter(Boolean))];
+    for (const base of bases) {
+      const key = "family:" + base;
+      const family = el("details", {open: openDirectories.has(key) ? "" : null,
+        ontoggle: e => e.target.open ? openDirectories.add(key) : openDirectories.delete(key)},
+        el("summary", {}, `${base} · 派生词 · ${familyItems(members, base).length}`));
+      family.append(el("div", {class: "directory-children"}, familyItems(members, base).map(directoryItem)));
+      children.append(family);
+    }
+    section.append(children); nav.append(section);
+  }
+  side.append(nav);
+}
+function renderFamilyQueue() {
+  const queue = $("#queue");
+  const current = state.package.items.find(i => i.id === activeId);
+  const base = current?.term_info?.base;
+  if (!base) { queue.replaceChildren(); queue.hidden = true; return; }
+  queue.hidden = false;
+  const all = familyItems(filtered(true), base);
+  familyPage = Math.max(0, Math.min(familyPage, Math.ceil(all.length / PAGE_SIZE) - 1));
+  const members = all.slice(familyPage * PAGE_SIZE, (familyPage + 1) * PAGE_SIZE);
+  const filteredScope = Boolean(query || status !== "all" || facets.size);
+  const header = el("div", {class:"queue-top"}, [
+    el("span", {}, `${base} · 派生词 · ${all.length} 项`),
+    el("button", {class:"approve-all", disabled: filteredScope,
+      title: filteredScope ? "清除搜索和状态筛选后同意完整派生类" : "同意本类各项当前暂定译名，跳过必审和已有人工决定",
+      onclick: () => approveFamily(base)}, "同意一类"),
+  ]);
+  const rows = el("div", {class:"queue-list"}, members.map(i =>
+    el("button", {class:`queue-item status-card ${itemState(i)} ${i.id === activeId ? "active" : ""}`,
+      "aria-current": i.id === activeId ? "true" : null,
+      onclick: () => {
+        activeId = i.id; page = Math.floor(filtered(true).indexOf(i) / PAGE_SIZE); render(true);
+      }}, [previewNode(i), el("span", {class:"small"}, statusName(i))])));
+  queue.replaceChildren(header, rows, el("div", {class:"queue-pagination"}, [
+    el("button", {disabled: familyPage === 0, onclick: () => {familyPage--; renderFamilyQueue();}}, "←"),
+    el("span", {}, `${familyPage + 1} / ${Math.max(1, Math.ceil(all.length / PAGE_SIZE))}`),
+    el("button", {disabled:(familyPage + 1) * PAGE_SIZE >= all.length,
+      onclick: () => {familyPage++; renderFamilyQueue();}}, "→"),
+  ]));
+}
+async function approveFamily(base) {
+  try {
+    await flush();
+    const submitted = new Set(state.submissions.flatMap(s => s.decisions.map(d => d.item_id)));
+    const eligible = familyBatch(state.package.items, base, drafts, submitted);
+    for (const i of eligible) drafts.items[i.id] = {mode:"keep"};
+    markDirty(); await flush(); render(true);
+  } catch (error) { notify(error.message); }
+}
 function renderSidebar() {
   const p = state.package,
     side = $("#sidebar");
@@ -314,13 +403,18 @@ function renderSidebar() {
     el("p", { class: "small muted" }, `${count()} / ${p.items.length} 已审`),
     el("div", { class: "nav-label" }, "目录"),
   );
+  if (p.review_profile === "glossary") {glossaryDirectory(p, side); return;}
   const nav = el("nav", { class: "nav", "aria-label": "主目录" });
-  for (const g of [{ id: "all", title: "全部材料" }, ...p.groups])
+  for (const g of [{ id: "all", title: "全部材料" }, ...p.groups]) {
+    const members = p.items.filter(i => g.id === "all" || i.group_id === g.id);
+    const groupState = members.length && members.every(effective) ? "reviewed"
+      : members.some(i => itemState(i) === "required") ? "required" : "pending";
     nav.append(
       el(
         "button",
         {
-          class: group === g.id ? "active" : "",
+          class: `status-card ${groupState} ${group === g.id ? "active" : ""}`,
+          "aria-label": `${g.title} · ${{reviewed: "已审", required: "必审", pending: "待审"}[groupState]}`,
           onclick: () => {
             group = g.id;
             page = 0;
@@ -337,6 +431,7 @@ function renderSidebar() {
         ],
       ),
     );
+  }
   side.append(nav);
   for (const f of p.facets) {
     side.append(el("div", { class: "nav-label" }, f.title));
@@ -392,54 +487,31 @@ function renderStatuses() {
   );
 }
 function renderQueue() {
+  if (state.package.review_profile === "glossary") {renderFamilyQueue(); return;}
+  $("#queue").hidden = false;
   const list = currentPage(),
     queue = $("#queue");
-  const current = list.find(i => i.id === activeId);
   const summary = el("div", {class: "queue-summary"}, [
     el("button", {
       id: "queue-toggle", "aria-controls": "queue-content", "aria-expanded": String(queueOpen),
       onclick: () => {queueOpen = !queueOpen; renderQueue(); $("#queue-toggle").focus();},
     }, queueOpen ? "收起条目" : "展开条目"),
-    el("span", {class: "queue-current"}, current
-      ? `${filtered(true).findIndex(i => i.id === activeId) + 1} / ${filtered(true).length} · ${current.location || current.id}`
-      : "没有符合条件的条目"),
   ]);
   if (!list.length) {queue.replaceChildren(summary); return;}
   const top = el("div", { class: "queue-top" }, [
-    el("label", {}, [
-      el("input", {
-        type: "checkbox",
-        "aria-label": "选择本页",
-        checked: list.length > 0 && list.every((i) => selected.has(i.id)),
-        onchange: (e) => {
-          for (const i of list)
-            e.target.checked ? selected.add(i.id) : selected.delete(i.id);
-          renderQueue();
-        },
-      }),
-      ` ${filtered(true).length} 项`,
-    ]),
-    el(
-      "button",
-      { onclick: () => batchApprove() },
-      selected.size ? `批准所选 ${selected.size}` : "批准本页",
-    ),
+    el("button", {
+      class: "approve-all", "aria-label": "全选批准本页",
+      title: "全选本页，跳过必审",
+      onclick: () => batchApprove(),
+    }, [el("span", {class: "select-all-icon", "aria-hidden": "true"}, "☰"), "全选批准"]),
+    el("span", {}, `${filtered(true).length} 项`),
   ]);
   const rows = el("div", { class: "queue-list" });
   for (const i of list) {
-    const pick = el("input", {
-      type: "checkbox",
-      "aria-label": `选择 ${i.id}`,
-      checked: selected.has(i.id),
-      onchange: (e) => {
-        e.target.checked ? selected.add(i.id) : selected.delete(i.id);
-        renderQueue();
-      },
-    });
     const button = el(
       "button",
       {
-        class: `queue-item ${activeId === i.id ? "active" : ""}`,
+        class: `queue-item status-card ${itemState(i)} ${activeId === i.id ? "active" : ""}`,
         "aria-current": activeId === i.id ? "true" : null,
         onclick: () => {
           activeId = i.id;
@@ -450,14 +522,13 @@ function renderQueue() {
       },
       [
         el("div", { class: "queue-meta" }, [
-          el("span", { class: `dot ${itemState(i)}` }),
           el("span", { class: "mono" }, i.id),
           statusName(i),
         ]),
         el("div", { class: "queue-title" }, i.location || i.id),
       ],
     );
-    rows.append(el("div", { class: "queue-row" }, [pick, button]));
+    rows.append(el("div", { class: "queue-row" }, [button]));
   }
   const listCount = filtered(true).length;
   const paging = el("div", { class: "queue-pagination" }, [
@@ -468,7 +539,6 @@ function renderQueue() {
         onclick: () => {
           page--;
           activeId = null;
-          selected.clear();
           render();
         },
       },
@@ -486,7 +556,6 @@ function renderQueue() {
         onclick: () => {
           page++;
           activeId = null;
-          selected.clear();
           render();
         },
       },
@@ -504,7 +573,7 @@ function assetUrl(id) {
 function blockNode(b, i, version, paired, projection) {
   const wrapper = el("div", { class: "block" });
   const names = { dst: "译名", render: "人物译名", aliases: "别名", note: "说明", category: "分类", gender: "性别", keep_source: "保留原文" };
-  if (version !== "evidence" && names[b.id])
+  if (!i.term_info && version !== "evidence" && names[b.id])
     wrapper.append(el("div", { class: "field-label" }, names[b.id]));
   if (b.type === "text") {
     const text = el("div", {
@@ -556,6 +625,16 @@ function blockNode(b, i, version, paired, projection) {
   return wrapper;
 }
 function sourceEvidence(i) {
+  if (i.term_info) {
+    const info = i.term_info;
+    const fields = [["原词", info.source], ["分类领域", info.category], ["上下文", info.context], ["PDF 页码", info.page ?? ""]];
+    return el("details", {class:"evidence term-info", open:""}, [
+      el("summary", {}, "术语信息"),
+      el("dl", {class:"term-info-fields"}, fields.flatMap(([label, value]) => [
+        el("dt", {}, label), el("dd", {}, String(value)),
+      ])),
+    ]);
+  }
   if (!i.evidence.length) return null;
   const groups = readingNoteGroups(i.evidence);
   const notes = groups.flatMap(group => group.blocks.map(entry => entry.block));
@@ -705,8 +784,8 @@ function article(i) {
   if (evidence) article.append(evidence);
   const panels = el("div", { class: "comparison" });
   for (const [version, title] of [
-    ["before", "当前版本"],
-    ["proposal", "建议版本"],
+    ["before", i.term_info ? "当前译名" : "当前版本"],
+    ["proposal", i.term_info ? "建议译名" : "建议版本"],
   ]) {
     const blocks = i[version];
     const body = el("div", { class: "panel-body" });
@@ -734,11 +813,11 @@ function article(i) {
   if (i.rationale)
     article.append(
       el("div", { class: "explanation" }, [
-        el("strong", {}, "修改依据"),
+        el("strong", {}, "🤖 修改依据"),
         `　${i.rationale}`,
       ]),
     );
-  if (i.context || i.location)
+  if (!i.term_info && (i.context || i.location))
     article.append(
       el("details", { class: "source-context" }, [
         el("summary", {}, i.location || "上下文"),
@@ -798,24 +877,29 @@ function article(i) {
   article.append(
     el("footer", { class: "item-footer" }, [
       `${state.package.items.indexOf(i) + 1} / ${state.package.items.length}`,
-      view === "focus" ? el("button", { onclick: () => nextItem(i) }, "下一项 →") : null,
+      view === "focus" ? el("div", {class: "item-navigation"}, [
+        el("button", {class: "next-item", onclick: () => nextItem(i)}, "下一项 →"),
+      ]) : null,
     ]),
   );
   return article;
 }
-function nextItem(i) {
-  const list = filtered(false),
-    index = list.findIndex((x) => x.id === i.id);
-  if (!list.length) {
-    activeId = null;
-    render();
-    return;
-  }
-  const next = list[index < 0 ? 0 : (index + 1) % list.length];
-  activeId = next.id;
-  page = Math.floor(list.indexOf(next) / PAGE_SIZE);
+function nextItem(i, step = 1) {
+  const list = filtered(false);
+  const next = adjacentItem(state.package.items, list, i.id, step);
+  activeId = next?.id;
+  page = next ? Math.floor(list.indexOf(next) / PAGE_SIZE) : 0;
   render(true);
+  $("#articles").scrollIntoView({block: "start"});
 }
+document.addEventListener("keydown", event => {
+  if (!state || view !== "focus" || document.querySelector("dialog[open]")) return;
+  const step = navigationStep(event);
+  const item = state.package.items.find(i => i.id === activeId);
+  if (!step || !item) return;
+  event.preventDefault();
+  nextItem(item, step);
+});
 function render(hold = false) {
   if (!state) return;
   const list = currentPage(hold);
@@ -873,40 +957,24 @@ function showModal(title, nodes, actions = []) {
 function closeModal() {
   $("#modal").close();
 }
+let batchBusy = false;
 async function batchApprove() {
+  if (batchBusy) return;
+  batchBusy = true;
   try {
+    const ids = currentPage().map(i => i.id);
     await flush();
-    const ids = selected.size ? [...selected] : currentPage().map((i) => i.id);
-    const preview = await api("/api/bulk-preview", "POST", { item_ids: ids });
-    showModal(
-      "批准推荐方案",
-      [
-        el(
-          "p",
-          {},
-          `将批准 ${preview.eligible.length} 项，跳过 ${ids.length - preview.eligible.length} 项。`,
-        ),
-      ],
-      [
-        ["取消", closeModal],
-        [
-          "批准",
-          async () => {
-            const result = await api("/api/bulk", "POST", {
-              item_ids: ids,
-              expected_revision: remoteRevision,
-            });
-            drafts = result.drafts;
-            remoteRevision = drafts.revision;
-            selected.clear();
-            closeModal();
-            render(true);
-          },
-        ],
-      ],
-    );
+    const result = await api("/api/bulk", "POST", {
+      item_ids: ids, expected_revision: remoteRevision,
+    });
+    drafts = result.drafts;
+    remoteRevision = drafts.revision;
+    render(true);
+    notify(`已批准 ${result.accepted.length} 项（无建议的保留原文），跳过 ${ids.length - result.accepted.length} 项（必审、已有人工草稿或已提交）。`);
   } catch (error) {
     notify(error.message);
+  } finally {
+    batchBusy = false;
   }
 }
 async function submit() {
@@ -915,7 +983,6 @@ async function submit() {
     const all = state.package.items.filter(effective),
       chosen = new Set(
         all
-          .filter((i) => !selected.size || selected.has(i.id))
           .map((i) => i.id),
       );
     const nodes = [

@@ -5,6 +5,7 @@ import json
 import re
 import shutil
 import subprocess
+from collections import Counter
 from functools import lru_cache
 from pathlib import Path, PurePosixPath
 
@@ -61,6 +62,23 @@ def validate_package(data, root=None):
         if asset.get('full_asset_id') and asset['full_asset_id'] not in assets:
             raise ReviewError('缺少整页资源')
     targets = {}
+    terms = [i for i in data['items'] if 'term_info' in i]
+    term_sources = {i['term_info']['source']: i for i in terms}
+    ambiguous = {s for s, count in Counter(i['term_info']['source'] for i in terms).items() if count > 1}
+    for item in terms:
+        info = item['term_info']
+        if data.get('review_profile') != 'glossary' or item['group_id'] != 'terms':
+            raise ReviewError('术语信息只适用于词表术语')
+        if not info['source'].strip() or item['location'] != info['source']:
+            raise ReviewError('术语信息与原词身份不一致')
+        if item['before'] != [dict(id='dst', type='text', text=item['before'][0].get('text'))]:
+            raise ReviewError('术语审核只允许译名内容块')
+        missing = not info['context'].strip() or not info['category'].strip() or info['page'] is None or not item['before'][0]['text'].strip()
+        if missing and not item['requires_human']:
+            raise ReviewError('术语证据或译名缺失时必须逐项审核')
+        base = info.get('base')
+        if base is not None and (base not in term_sources or base in ambiguous or info['source'] in ambiguous or base == info['source'] or term_sources[base]['term_info'].get('base')):
+            raise ReviewError('派生类必须指向存在的独立基础词')
     for item in data['items']:
         if item['group_id'] not in groups: raise ReviewError('条目目录不存在')
         for key, values in item['facets'].items():

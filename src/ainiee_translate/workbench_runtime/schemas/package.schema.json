@@ -609,6 +609,37 @@
               "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
             },
             "uniqueItems": true
+          },
+          "term_info": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "context": {
+                "type": "string"
+              },
+              "base": {
+                "type": "string"
+              },
+              "page": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1
+              }
+            },
+            "required": [
+              "source",
+              "category",
+              "context",
+              "page"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -652,6 +683,12 @@
         "portable"
       ],
       "additionalProperties": false
+    },
+    "review_profile": {
+      "enum": [
+        "glossary",
+        "reading"
+      ]
     }
   },
   "required": [

@@ -8,6 +8,7 @@ import uuid
 from .artifact_io import write_json, digest
 from .glossary import load_locked, lint_locked
 from .helpers import backup_file
+from .glossary_review_data import load_review_data, term_review_info
 from .workbench_bridge import (runtime, block, package, prepare_project, load_project,
                                compare_project, instruction_text, application_lock, submitted_comparison)
 
@@ -61,11 +62,13 @@ def _row(data, info):
     return row
 
 
-def prepare_glossary(locked, output, proposals=None):
+def prepare_glossary(locked, output, proposals=None, review_data=None):
     data = load_locked(locked)
+    metadata = load_review_data(data.get('terms', []), review_data)
     suggested = load_locked(proposals) if proposals else None
     p = package('术语表校对 · ' + Path(locked).stem,
                 [dict(id=k, title=title) for k, title, _ in GROUPS])
+    p['review_profile'] = 'glossary'
     binding = dict(kind='glossary', locked=str(Path(locked).resolve()), items={})
     for group, _, identity_key in GROUPS:
         for index, row in enumerate(data.get(group, [])):
@@ -73,7 +76,7 @@ def prepare_glossary(locked, output, proposals=None):
             if not isinstance(identity, str) or not identity:
                 raise ValueError('词条缺少稳定原词身份')
             iid = f'{group}-{index + 1}'
-            fields = _fields(group, row)
+            fields = [dict(key='dst', kind='str')] if group == 'terms' else _fields(group, row)
             before = _blocks(row, fields)
             info = dict(group=group, index=index, identity_key=identity_key, identity=identity, fields=fields)
             info['identity_hash'] = digest({k: v for k, v in row.items() if k not in [f['key'] for f in fields]})
@@ -87,6 +90,11 @@ def prepare_glossary(locked, output, proposals=None):
                           block('metadata', '\n'.join(f'{k}：{v}' for k, v in row.items() if k not in [f['key'] for f in fields]))],
                 allow_empty_blocks=[f['key'] for f in fields if f['key'] not in ('dst', 'render', 'keep_source')],
                 rationale='逐项核对译名、分类与说明；别名每行一项，“保留原文”使用是或否。', location=identity))
+            if group == 'terms':
+                item = p['items'][-1]
+                item['term_info'], item['requires_human'] = term_review_info(row, metadata)
+                item['evidence'] = []
+                item['rationale'] = ''
             binding['items'][iid] = info
     return prepare_project(output, p, binding)
 

@@ -8,6 +8,8 @@
 
 groups 为 `[{id,title}]`；facets 为 `[{id,title,options:[{id,title}]}]`。条目只属于一个 group_id，`facets` 是维度到选项 ID 数组的映射。
 
+本地 AiNiee 扩展（不属于上游 0.3.0）：包可带 `review_profile: "glossary" | "reading"`。glossary 中的 terms 条目可带 `term_info: {source,category,context,page,base?}`，前三项为文本，page 为从 1 开始的物理页码整数或 null，base 为同包独立基础词的 source。词条 location 等于 source，版本内容块仅为 dst。缺领域、上下文、页码或译名时 requires_human 必须为 true。基础词自身不含 base，未知关系和含糊的同形词派生关联拒绝；未使用派生关联的旧表同形词仍能逐项审核。该元数据随材料冻结并参与指纹，不属于可写业务译名。
+
 每项结构：
 
 ```json

@@ -15,6 +15,7 @@ def main(argv=None):
     g = commands.add_parser('glossary', help='准备术语表校对')
     g.add_argument('--locked', required=True)
     g.add_argument('--proposals')
+    g.add_argument('--review-data', help='按原词关联上下文、PDF 页码和派生关系的 JSON')
     g.add_argument('--out', required=True)
     r = commands.add_parser('reading', help='准备微信读书反馈校对')
     for name in ('round', 'cache', 'out'):
@@ -42,7 +43,7 @@ def main(argv=None):
     try:
         if args.command == 'glossary':
             from .workbench_glossary import prepare_glossary
-            result = prepare_glossary(args.locked, args.out, args.proposals)
+            result = prepare_glossary(args.locked, args.out, args.proposals, args.review_data)
         elif args.command == 'reading':
             from .workbench_reading import prepare_reading
             result = prepare_reading(args.round, args.cache, args.out, args.report_revision)
