@@ -28,26 +28,28 @@
 **Files:** workbench_runtime/{web,review_workbench,schemas}, workbench_glossary.py, workbench.py, new glossary_review_data.py; tests in 测试/单元/test_workbench_glossary.py and test_workbench_presets.py.
 **Interfaces:** prepare_glossary(locked, output, proposals=None, review_data=None); metadata JSON {terms:[{src,category,context,page,base?,requires_human?}]}; frozen item term_info {source,category,context,page,base?} and optional package review_profile enum glossary/reading.
 
-- [ ] Write regression tests asserting dst-only blocks, four metadata fields, independent family IDs, required missing evidence, preserved fields, rejected duplicate/unknown/cyclic metadata and 0.3.0 resources.
-- [ ] Run tests RED with pytest and workspace basetemp.
-- [ ] Merge upstream changes from 208e5a9 to v0.3.0 preserving local patches; validate optional extension fields and semantic references. Add metadata reader and CLI argument; keep existing identity/CAS bindings.
-- [ ] Run glossary and reading/portable regression GREEN; commit.
+- [x] Write regression tests asserting dst-only blocks, four metadata fields, independent family IDs, required missing evidence, preserved fields, rejected duplicate/unknown/cyclic metadata and 0.3.0 resources.
+- [x] Run tests RED with pytest and workspace basetemp.
+- [x] Merge upstream changes from 208e5a9 to v0.3.0 preserving local patches; validate optional extension fields and semantic references. Add metadata reader and CLI argument; keep existing identity/CAS bindings.
+- [x] Run glossary and reading/portable regression GREEN; commit.
 
 ### Task 2: Implement family navigation and minimal term panels
 
 **Files:** web/scripts/{app.js,glossary.js}, web/styles/app.css; 测试/前端/glossary.test.mjs.
 **Interfaces:** termPreview(item,draft), familyItems(items,base), familyBatch(items,base,drafts,submittedIds) pure helpers. app.js uses same preview for sidebar and queue, familyBatch yields only eligible family items.
 
-- [ ] Write Node tests: source/current preview, explicit accept/edit preview, missing translation, >24 family members, required/touched/comment/submitted exclusions, other family exclusion. Run RED.
-- [ ] Implement helpers, nested directory, family-only queue, keep batch across pages, open term-info, translation-only panels, preserve WeRead evidence projection.
-- [ ] Run Node and adapter tests GREEN, inspect desktop/narrow UI and test interactions in a synthetic package; commit.
+- [x] Write Node tests: source/current preview, explicit accept/edit preview, missing translation, >24 family members, required/touched/comment/submitted exclusions, other family exclusion. Run RED.
+- [x] Implement helpers, nested directory, family-only queue, keep batch across pages, open term-info, translation-only panels, preserve WeRead evidence projection.
+- [x] Run Node and adapter tests GREEN, exercise component interactions in memory and export synthetic package; commit.
+- [ ] Desktop/narrow visual inspection unavailable: browser tooling stopped on Windows URL policy; see validation report. No alternate browser automation attempted.
 
 ### Task 3: Document, package and verify
 
 **Files:** references/review_workbench.md, runtime protocol/UPSTREAM.md, docs/review-presets-validation.md; generated skills bundle via build.py.
 **Interfaces:** Existing build.py and portable export consume source runtime; no installed files changed.
 
-- [ ] Document metadata JSON, AI semantic grouping/context provenance, batch behavior and re-export requirement; update guidance copied into bundle.
-- [ ] Exercise formal submit/export/import/compare/apply with independent family edits and preserved fields, plus legacy packet regression.
-- [ ] Run complete Python suite and all Node tests; build and inspect bundled files; record evidence and visual limitations truthfully.
-- [ ] Fresh whole-branch review against spec; fix consequential findings with regression tests; final verification, local commit, clean branch.
+- [x] Document metadata JSON, AI semantic grouping/context provenance, batch behavior and re-export requirement; update guidance copied into bundle.
+- [x] Exercise formal submit/export/import/compare/apply with independent family edits and preserved fields, plus legacy packet regression.
+- [x] Run complete Python suite and all Node tests; build and inspect bundled files; record evidence and visual limitations truthfully.
+- [x] Fresh whole-branch review against spec; one keyboard finding fixed RED→GREEN and independently verified.
+- [x] Final full regression after keyboard fix: 295 Python and 17 frontend pass; bundles rebuilt and verified, local commit retained.

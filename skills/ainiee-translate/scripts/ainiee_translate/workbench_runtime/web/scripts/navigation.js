@@ -1,7 +1,7 @@
 // Keep native editing, dialog controls and modified shortcuts intact.
 export function navigationStep(event) {
   if (event.defaultPrevented || event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey ||
-      event.target?.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], dialog, summary, a')) return 0;
+      event.target?.closest('input, textarea, select, button, [role="button"], [contenteditable]:not([contenteditable="false"]), [role="textbox"], dialog, summary, a')) return 0;
   return event.key === "ArrowLeft" ? -1 : ["ArrowRight", " "].includes(event.key) ? 1 : 0;
 }
 

@@ -20,3 +20,11 @@ test("navigation wraps and finds neighbors when a reviewed item leaves the filte
   assert.equal(adjacentItem(all, remaining, "b", -1).id, "a");
   assert.equal(adjacentItem(all, [], "b", 1), null);
 });
+
+test("focused native and button-role controls retain keyboard activation", () => {
+  for (const control of ['button', '[role="button"]']) {
+    const target = {closest: selector => selector.split(',').map(s=>s.trim()).includes(control) ? {} : null};
+    for (const key of [' ', 'ArrowLeft', 'ArrowRight'])
+      assert.equal(navigationStep({key, target}), 0, `${control} must retain ${JSON.stringify(key)}`);
+  }
+});

@@ -120,3 +120,29 @@ def test_frozen_term_metadata_is_validated_and_portable(tmp_path):
     assert apply_glossary(project, locked, dict(human_instruction='继续',human_reference='test'))['applied'] == 1
     actual = json.loads(locked.read_text(encoding='utf-8'))['terms'][1]
     assert actual['dst'] == '家计账户' and actual['private'] == {'keep':1}
+
+
+def test_legacy_full_field_binding_still_applies(tmp_path):
+    from ainiee_translate.workbench_bridge import package, block, prepare_project
+    from ainiee_translate.artifact_io import digest
+    from ainiee_translate.workbench_glossary import _fields, _blocks
+    locked = tmp_path / 'old.json'
+    row = dict(src='account', dst='账户', category='finance', note='原说明', private=1)
+    write_json(locked, {'terms':[row]})
+    fields = _fields('terms', row)
+    blocks = _blocks(row, fields)
+    p = package('旧审核包', [{'id':'terms','title':'术语'}])
+    p['items'] = [dict(id='terms-1',target_id='terms-1',group_id='terms',facets={},requires_human=False,
+                       before=blocks,baseline=copy.deepcopy(blocks),proposal=None,evidence=[block('source','account')],
+                       rationale='',location='account',allow_empty_blocks=['category','note'])]
+    info = dict(group='terms',index=0,identity_key='src',identity='account',fields=fields,
+                identity_hash=digest({k:v for k,v in row.items() if k not in [f['key'] for f in fields]}))
+    project = tmp_path / 'r'
+    prepare_project(project,p,dict(kind='glossary',locked=str(locked.resolve()),items={'terms-1':info}))
+    store,_ = load_project(project)
+    d = store.state()['drafts']
+    d['items']['terms-1'] = dict(mode='edit',touched=True,edits={'dst':'账目','category':'economics','note':'旧包修订'})
+    store.save(d,d['revision']); store.submit(['terms-1'],store.state()['drafts']['revision'])
+    assert apply_glossary(project,locked,dict(human_instruction='继续',human_reference='legacy-test'))['applied'] == 1
+    actual = json.loads(locked.read_text(encoding='utf-8'))['terms'][0]
+    assert actual == row | dict(dst='账目',category='economics',note='旧包修订')

@@ -16,3 +16,5 @@ Upstream version: 0.3.0. Navigation shortcuts, status cards, stateful sidebar ic
 AiNiee 2.1.3 display patch: separate WeRead excerpt/thought h2 sections, unwrap phone-highlight line wraps with source-mapped quotes; frozen material is unchanged.
 
 Local review presets: optional review_profile (glossary/reading) and term_info are AiNiee protocol extensions, not upstream fields. Explicit semantic families, translation-only term decisions, open evidence and two-line previews. Family approval keeps current translations and skips existing drafts/required/submitted items. Current-block comparison excludes frozen display metadata from its single-item validation probe; complete packages retain family-reference validation.
+
+Local accessibility repair: navigation shortcuts also exclude focused native/button-role controls, so Space activates decision, batch and submit buttons normally.
