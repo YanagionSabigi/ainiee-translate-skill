@@ -41,3 +41,25 @@ Path('returned.json').write_text(json.dumps(result_envelope(store)),encoding='ut
     assert main(['import-results',str(project),'--from',str(recipient/'returned.json')]) == 0
     assert apply_glossary(project,locked,INSTRUCTION)['applied'] == 1
     assert json.loads(locked.read_text(encoding='utf-8'))['terms'][0]['dst'] == '氧气'
+
+
+def test_portable_launchers_check_dependencies_in_recipient_folder(tmp_path):
+    from ainiee_translate.workbench import main
+    _, project, _ = setup_glossary(tmp_path)
+    archive = tmp_path / 'launch.zip'
+    assert main(['export', str(project), '--out', str(archive)]) == 0
+    recipient = tmp_path / 'friend package 中文'
+    with zipfile.ZipFile(archive) as z:
+        assert '开始校对.cmd' in z.namelist()
+        assert 'start_review.command' in z.namelist()
+        assert not any('portable_templates/' in name for name in z.namelist())
+        assert (z.getinfo('start_review.command').external_attr >> 16) & 0o111 == 0o111
+        z.extractall(recipient)
+    result = subprocess.run([sys.executable, str(recipient / 'start_review.py'), '--check'],
+                            capture_output=True, timeout=30)
+    assert result.returncode == 0, (result.stdout + result.stderr).decode('utf8', errors='replace')
+    missing = subprocess.run([sys.executable, '-S', str(recipient / 'start_review.py'), '--check'],
+                             capture_output=True, timeout=30)
+    assert missing.returncode != 0
+    assert b'requirements.txt' in missing.stdout
+    assert b'Traceback' not in missing.stderr

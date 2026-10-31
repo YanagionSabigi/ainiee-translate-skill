@@ -8,7 +8,7 @@
 
 本项目依赖并继承两个上游项目的成果：[AiNiee](https://github.com/NEKOparapa/AiNiee) 提供基础文件读写、缓存结构及翻译规则，[AiNiee-skill（ainiee-translate-skill）](https://github.com/xuanji86/ainiee-translate-skill) 提供 Agent 翻译技能、提示词与术语表管理、批次工作流和插件基础。本项目在此基础上扩展 PDF 出版与阅读校对；基础运行所需的相关代码和技能文件已随本项目包含，无需为 EPUB / TXT 另外安装上述两个上游项目。
 
-> 当前版本：`v2.1.1`，新增术语表与微信读书反馈的交互校对工作台。核对日期：2026-10-30。
+> 当前版本：`v2.1.2`，同步 Review Workbench 0.2.0 的目录侧边栏和离线审核启动入口。核对日期：2026-10-31。
 
 ## 可以做什么
 
@@ -249,9 +249,15 @@ $env:AINIEE_MINERU_ROOT = 'D:/Tools/MinerU'
 
 ### 交给别人审核
 
-让 Agent 将当前审核项目导出为“给别人审核的包”，把 ZIP 发给审核者。接收者解压后阅读 `OPEN-ME.txt`，准备 Python 3.11+ 和 jsonschema，运行 `python start_review.py` 打开页面。启动脚本只启动本地服务，不安装依赖、不联网下载。普通文本包不含公式引擎或字体，也不需要 Node.js；含公式时才附带对应资源并需要 Node.js 18+。接收者不需要 Git、AiNiee 或任何 AI skill。
+让 Agent 将当前审核项目导出为“给别人审核的包”，把 ZIP 发给审核者。接收者解压后阅读 `OPEN-ME.txt`，准备 Python 3.11+ 和 jsonschema，Windows 双击 `开始校对.cmd` 打开页面；macOS 可使用 `start_review.command`，Linux 运行 `python3 start_review.py`。先完整解压，保留启动窗口；不要直接打开网页 HTML。可用 `python start_review.py --check` 检查环境，缺少依赖时窗口会显示安装指引。启动脚本只启动本地服务，不安装依赖、不联网下载。普通文本包不含公式引擎或字体，也不需要 Node.js；含公式时才附带对应资源并需要 Node.js 18+。接收者不需要 Git、AiNiee 或任何 AI skill。
 
 审核者在网页正式提交后，从“记录”下载结果 JSON 回传；让原 Agent 导入原审核项目，再回到聊天明确继续写回。给别人审核的包不含技能目录、示例或 Git 仓库，与完整技能安装 ZIP 是两种用途不同的文件。
+
+### 审核包与技能安装包
+
+[本项目 Release](https://github.com/YanagionSabigi/ainiee-translate-skill/releases/latest) 的 `ainiee-translate-v版本.zip` 是完整 AI 技能安装包，包含 SKILL 和生成审核包所需的启动模板。发给审核者时，应从具体项目重新导出审核 ZIP；旧 ZIP 不会自动更新界面或启动入口。
+
+只想体验通用工作台，可下载上游已发布的 [Review Workbench 0.2.0 演示审核包](https://github.com/YanagionSabigi/review-workbench/releases/download/v0.2.0/review-workbench-demo-0.2.0.zip)。它使用上游公开示例，含公式，不含你的书籍或微信读书数据；它也不代替 AiNiee 技能安装包。macOS 启动入口尚未在 macOS 真机验证。
 
 ## 微信读书人工校对
 

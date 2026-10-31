@@ -19,6 +19,8 @@
 <PFX> -m ainiee_translate.workbench serve <NEW_PROJECT>
 ```
 
+页面左上角侧边栏图标展开/收起目录，悬停提示与 aria 状态随开关变化；目录和条目列表默认收起，按需展开。逐条审核使用“下一项”，连续审核向下阅读。
+
 向用户打开并提供启动输出的完整本地 URL；只用本机 127.0.0.1 服务。微信反馈展示现译与确切推荐，阅读选区和全部想法保持可见，原文、存在的 A/B/C 候选和依据可展开；每段分别编辑，段内换行不拆成新段。无定位/辨析的项目先留言并补全业务证据，不能绕过原 reading 闸门。
 
 ## 等待人工提交，再继续
@@ -59,4 +61,8 @@
 
 审核 ZIP 只携带冻结材料、必要网页/资源、JSON 校验与保存服务及依赖说明，不含 SKILL、示例、Git 仓库、业务缓存或 AiNiee 翻译工具。普通文本包去掉 KaTeX/字体，无需 Node.js；公式包才附带数学资源并要求 Node.js 18+。审核者需要 Python 3.11+、jsonschema >=4.23,<5，无需 Git。启动不会自动安装依赖或下载，首次依赖安装与每次启动分开。
 
-接收者解压，按 OPEN-ME.txt 运行 python start_review.py；正式提交后从页面“记录”下载结果 JSON。Agent 只向原 PROJECT 导入回传数据，不执行回传包的代码；继续保留草稿/正式提交区分，用户在聊天明确继续后才 compare/apply。结果不得导入另一个书籍或轮次，冲突仍交人处理。`export --results-only` 可只导出已提交决定。
+接收者先完整解压，阅读 OPEN-ME.txt。Windows 双击 `开始校对.cmd`；macOS 可使用 `start_review.command`（尚未在 macOS 真机验证），Linux 运行 `python3 start_review.py`。保留启动窗口，不直接打开 web/index.html。`python start_review.py --check` 检查环境；缺依赖时显示安装指引，不自动安装。旧审核 ZIP 必须重新导出才能获得新版 UI 与入口。
+
+正式提交后从页面“记录”下载结果 JSON。Agent 只向原 PROJECT 导入回传数据，不执行回传包的代码；继续保留草稿/正式提交区分，用户在聊天明确继续后才 compare/apply。结果不得导入另一个书籍或轮次，冲突仍交人处理。`export --results-only` 可只导出已提交决定。
+
+发布页的完整技能 ZIP 包含 SKILL 与启动模板，用来给 Agent 安装。它与发给人的具体项目审核 ZIP 不同。需要公开体验包时，可使用上游 0.2.0 的演示审核包；不得将真实书籍、想法或项目数据上传到公开 Release。

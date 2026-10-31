@@ -18,7 +18,7 @@ def copy_runtime(destination,portable=False,with_math=True):
     destination=Path(destination)
     for folder in (('review_workbench','web','schemas') if portable else ('review_workbench','web','schemas','examples','skill')):
         excluded=['__pycache__','*.pyc']
-        if portable and folder=='review_workbench':excluded+=['__main__.py','demo.py']
+        if portable and folder=='review_workbench':excluded+=['__main__.py','demo.py','portable_templates']
         if portable and folder=='web' and not with_math:excluded+=['katex','validate-tex.cjs']
         shutil.copytree(ROOT/folder,destination/folder,ignore=shutil.ignore_patterns(*excluded))
     if portable and not with_math:
@@ -71,8 +71,37 @@ def export_package(root,output,results_only=False,wheels=False):
         if not results_only:
             with_math=any(b['type']=='tex' for item in data['items'] for key in ('before','proposal','baseline','evidence') for b in (item.get(key) or []))
             copy_runtime(stage,portable=True,with_math=with_math)
-            (stage/'start_review.py').write_text('from pathlib import Path\nimport argparse\nimport sys\n\nif __name__ == "__main__":\n    if hasattr(sys.stdout,"reconfigure"): sys.stdout.reconfigure(encoding="utf-8")\n    parser=argparse.ArgumentParser(description="启动本机校对网页")\n    parser.add_argument("--port",type=int,default=0)\n    parser.add_argument("--no-open",action="store_true")\n    args=parser.parse_args()\n    print("正在启动本机校对服务（不会安装依赖或联网下载）…",flush=True)\n    from review_workbench.server import serve\n    serve(Path(__file__).resolve().parent,args.port,not args.no_open)\n',encoding='utf-8')
-            (stage/'OPEN-ME.txt').write_text('校对包\n\n需要 Python 3.11+；Python 依赖：jsonschema >=4.23,<5（详见 requirements.txt）。\n'+('本包含公式，提交公式决定需要 Node.js 18+；无需 npm 安装。\n' if with_math else '本包无公式，不需要 Node.js。\n')+'接收者无需 Git，也不需要安装任何 AI skill。\n\n首次安装依赖：python -m pip install -r requirements.txt\n启动：python start_review.py\n启动脚本不会执行 pip 或联网下载。保留终端窗口，使用打印的完整链接。\n\n离线依赖（仅导出时明确启用才含 wheels/）：python -m pip install --no-index --find-links wheels -r requirements.txt\n\n回传：在网页“记录”中下载结果 JSON，发回给材料提供者。\n',encoding='utf-8')
+            templates=ROOT/'review_workbench/portable_templates'
+            for name in ('start_review.py','开始校对.cmd','start_review.command'):
+                target=stage/name
+                content=(templates/name).read_text(encoding='utf-8')
+                target.write_text(content,encoding='utf-8',newline='\r\n' if name.endswith('.cmd') else '\n')
+                if name.endswith('.command'):target.chmod(0o755)
+            (stage/'OPEN-ME.txt').write_text(
+                '校对包：启动方法与环境要求\n\n'
+                '一、先完整解压 ZIP，不要在压缩软件里直接运行。\n'
+                'Windows：双击“开始校对.cmd”。网页会自动打开，请保留启动窗口。\n'
+                'macOS：安装好环境后，可双击 start_review.command；若解压后执行权限未保留，在终端运行 python3 start_review.py。\n'
+                'Linux：在解压目录运行 python3 start_review.py。\n'
+                '不要双击 web/index.html，它不能启动保存服务。\n'
+                '网页没打开时，复制启动窗口打印的完整链接到浏览器。\n'
+                '结束审核后可以关闭启动窗口；下次双击同一入口继续。\n\n'
+                '二、首次使用前的依赖\n'
+                '需要 Python 3.11+（https://www.python.org/downloads/）。\n'
+                'Windows 安装时勾选 Add python.exe to PATH，然后重新打开启动入口。\n'
+                'Python 依赖：jsonschema >=4.23,<5（requirements.txt）。\n'
+                'Windows 可在解压目录的地址栏输入 cmd 并回车，然后执行：\n'
+                '  python -m pip install -r requirements.txt\n'
+                '若只安装了 Python Launcher，可改为 py -3 -m pip install -r requirements.txt。\n'
+                'macOS/Linux 在解压目录的终端执行 python3 -m pip install -r requirements.txt。\n'
+                + ('本包含公式：提交公式决定还需要 Node.js 18+（https://nodejs.org/），无需 npm 安装。\n' if with_math else '本包无公式，不需要 Node.js。\n')
+                + '无需 Git，也无需安装 AI skill。启动入口不会自动安装或联网下载。\n'
+                '只有首次准备依赖需要安装；环境已经齐全时可直接双击启动。\n'
+                '若包含 wheels/，可离线运行 python -m pip install --no-index --find-links wheels -r requirements.txt。\n\n'
+                '三、检查与回传\n'
+                '可运行 python start_review.py --check 检查 Python 和依赖是否就绪。\n'
+                '启动失败时窗口会保留提示，可将提示发给材料提供者。\n'
+                '完成后在网页“记录”中下载结果 JSON，发回给材料提供者。\n',encoding='utf-8')
             if wheels:
                 result=subprocess.run([os.sys.executable,'-m','pip','download','--only-binary=:all:','-r',str(stage/'requirements.txt'),'-d',str(stage/'wheels')],capture_output=True)
                 if result.returncode:raise ReviewError('下载离线依赖失败：'+result.stderr.decode(errors='replace'))
@@ -81,7 +110,14 @@ def export_package(root,output,results_only=False,wheels=False):
         try:
             with zipfile.ZipFile(pending,'w',zipfile.ZIP_DEFLATED) as archive:
                 for path in stage.rglob('*'):
-                    if path.is_file():archive.write(path,path.relative_to(stage).as_posix())
+                    if path.is_file():
+                        if path.name=='start_review.command':
+                            info=zipfile.ZipInfo.from_file(path,path.relative_to(stage).as_posix())
+                            info.create_system=3
+                            info.external_attr=(stat.S_IFREG|0o755)<<16
+                            info.compress_type=zipfile.ZIP_DEFLATED
+                            archive.writestr(info,path.read_bytes())
+                        else:archive.write(path,path.relative_to(stage).as_posix())
             os.replace(pending,output)
         finally:
             if os.path.exists(pending):os.unlink(pending)

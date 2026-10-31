@@ -258,8 +258,21 @@ main {
   color: var(--action);
 }
 #directory-toggle {
-  font-size: var(--text-small);
-  padding: 6px var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: var(--space-2);
+  flex-shrink: 0;
+  border-color: transparent;
+}
+#directory-toggle[aria-expanded="true"] {
+  background: var(--action-soft);
+  color: var(--action);
+}
+#directory-toggle svg {
+  flex-shrink: 0;
 }
 /* §3.3: the queue consumes reading width only when the user requests it. */
 .review-layout {
@@ -914,11 +927,6 @@ dialog::backdrop {
   }
   .nav-label {
     margin-top: 16px;
-  }
-  #directory-toggle {
-    display: block;
-    font-size: 12px;
-    padding: 6px 8px;
   }
   .workspace-head {
     padding: 16px;

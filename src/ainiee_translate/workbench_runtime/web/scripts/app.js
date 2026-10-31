@@ -1262,6 +1262,9 @@ $("#flow-view").onclick = () => {
 function setDirectory(open) {
   $("#shell").classList.toggle("directory-open", open);
   $("#directory-toggle").setAttribute("aria-expanded", String(open));
+  const label = open ? "收起目录" : "展开目录";
+  $("#directory-toggle").setAttribute("aria-label", label);
+  $("#directory-toggle").title = label;
 }
 $("#directory-toggle").onclick = () => setDirectory(!$("#shell").classList.contains("directory-open"));
 setDirectory(false);
