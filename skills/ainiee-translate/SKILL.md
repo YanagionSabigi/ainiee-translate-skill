@@ -2,7 +2,7 @@
 name: ainiee-translate
 description: Use when translating a novel, EPUB, TXT or PDF on the coding agent itself, resuming an AiNiee cache, exporting reviewed translations, reviewing terminology, or proofreading translations using 微信读书 highlights and reading thoughts through a local review workbench or numbered chat decisions.
 metadata:
-  version: "2.1.3"
+  version: "2.2.0"
 ---
 
 # ainiee-translate 技能指南

@@ -1,5 +1,7 @@
 # 发布包与 CC Switch
 
+`v2.2.0` 同步 Review Workbench 0.3.0，提供默认展开的术语信息、上下两行的原词/译名预览、语义派生类和跨页「同意一类」，保留微信读书反馈校对。见 [2.2.0 发布说明](release-v2.2.0.md) 与 [验收记录](review-presets-validation.md)。新布局需准备新一轮并重新导出；旧冻结包继续兼容。
+
 `v2.1.3` 将微信读书的选区和想法拆成二级标题区块，合并手机划线中的段内显示断行并保留空行分段；原始材料和引用定位保持可核对。旧审核 ZIP 需重新导出。验证见 [微信反馈排版修正](weread-layout-validation.md)。
 
 `v2.1.2` 同步工作台 0.2.0 的侧边栏图标、Windows/macOS 启动入口和环境检查，说明见 [0.2.0 同步验收](workbench-020-validation.md)。原有审核 ZIP 需重新导出，不会自动更新。完整技能安装 ZIP 与收件人审核 ZIP 用途不同；通用体验可使用 [上游 0.2.0 演示审核包](https://github.com/YanagionSabigi/review-workbench/releases/download/v0.2.0/review-workbench-demo-0.2.0.zip)。

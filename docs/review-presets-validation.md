@@ -34,3 +34,7 @@ Synthetic artifacts (ignored local files):
 - `local/presets-dist/ainiee_translate-2.1.3-py3-none-any.whl`: local feature build; existing AiNiee release number unchanged.
 
 Independent code review completed with one P2 finding: Space on a focused button was intercepted by the upstream navigation shortcut. The regression failed before the fix, then all 17 frontend tests passed. Native buttons and button-role controls are now excluded; the reviewer verified the narrow fix and source/bundle parity. No other consequential findings. The first reviewer was unavailable due service usage limits; the fallback review completed normally.
+
+## Release acceptance
+
+On 2026-11-01 the user explicitly accepted the implementation and authorized merging into their main, pushing to their remote and publishing 2.2.0. This supersedes the development-phase local-only restriction above. The accepted changes are applied onto origin/main; local-only historical drafts are not included. Automated browser screenshots were not re-claimed.
