@@ -177,14 +177,16 @@ class Store:
         drafts=self._drafts()['items']
         submitted={d['item_id'] for s in self.submissions() for d in s['decisions']}
         return [i['id'] for i in self.package['items'] if i['id'] in ids and not i['requires_human']
-                and i['id'] not in submitted and i.get('proposal') is not None and not has_human_draft(drafts.get(i['id'],{}))]
+                and i['id'] not in submitted and not has_human_draft(drafts.get(i['id'],{}))]
 
     def bulk_accept(self,ids,expected_revision):
         with self.lock():
             draft=self._drafts()
             if draft['revision']!=expected_revision: raise ReviewError('草稿已更新',409)
             eligible=self.bulk_candidates(ids)
-            for key in eligible: draft['items'][key]={'mode':'accept'}
+            items={i['id']:i for i in self.package['items']}
+            for key in eligible:
+                draft['items'][key]={'mode':'accept' if items[key].get('proposal') is not None else 'keep'}
             draft['revision']+=1
             atomic_json(self.root/'drafts.json',draft)
             return {'drafts':draft,'accepted':eligible}

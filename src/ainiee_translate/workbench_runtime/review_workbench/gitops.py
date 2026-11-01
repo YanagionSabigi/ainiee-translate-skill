@@ -155,6 +155,9 @@ def compare(root,current,*,diff_dir=None):
                 actual=by_target[target];desired=d['blocks'];base=item['baseline']
                 # Validate current blocks against the same block schema and identity.
                 probe=copy.deepcopy(data);probe['items']=[copy.deepcopy(item)]
+                # Store already validated frozen family references in the complete package.
+                # This single-target probe validates current blocks, not directory relations.
+                probe['items'][0].pop('term_info',None)
                 probe['items'][0]['proposal']=actual;validate_package(probe,root)
                 entry['current']=actual
                 entry['status']='satisfied' if actual==desired else 'ready' if actual==base else 'conflict'

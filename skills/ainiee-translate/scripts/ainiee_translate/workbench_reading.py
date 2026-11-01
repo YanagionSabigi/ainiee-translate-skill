@@ -35,6 +35,7 @@ def prepare_reading(round_dir, cache, output, report_revision=None):
         frozen = {s['segment_id']: s for s in load_segments(round_dir)}
         p = package('微信读书校对 · ' + r['storage_path'],
                     [dict(id='notes', title='微信阅读反馈'), dict(id='expanded', title='同类扩展发现')])
+        p['review_profile'] = 'reading'
         binding = dict(kind='reading', round=str(round_dir), cache=str(Path(cache).resolve()),
                        project_id=r['project_id'], edition_id=r['edition_id'],
                        report_revision=report_revision, report_hash=digest(report), items={})
