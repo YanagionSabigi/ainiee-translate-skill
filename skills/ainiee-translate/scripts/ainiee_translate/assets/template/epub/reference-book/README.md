@@ -28,4 +28,4 @@ python publication_skill/scripts/pdf_to_epub.py check assets/template/epub/refer
 
 重建仅需原技能运行环境；素材已附带，无需安装字体或图像生成依赖。示例源 JSON 是手写的 normalized 数据参照；真实转换仍须从源绑定的 `review.json` 执行 normalize，不得照搬示例的 reviewed 标志、空提取记录或已编译 publication 对象跳过审校。
 
-`conversion-report.json` 记录实际图位、注释映射、资源哈希和阅读顺序。独立审核结果与实际阅读器验证范围见 原出版组件的 `docs/audit-20261105.md`。
+`conversion-report.json` 记录实际图位、注释映射、资源哈希和阅读顺序。上游独立审核报告未随本发行包分发；本示例的结构检查结果不能替代真实书籍的独立终校和实际阅读器验证。

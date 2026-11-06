@@ -63,7 +63,7 @@ python scripts/epub_weread.py "原书.epub" "无灰底测试.epub" --plain-callo
 脚注与图片链接、表格单元格底色。它针对保留出版社背景类的恢复版 EPUB，
 不处理任意行内背景或其他 CSS 命名约定。该选项用于比较灰底被微信读书拆到各段后的表现。
 
-已在《区判》的微信读书导入中完成手机实测：脚注、角标及文件名异常目录均消失，
+已在本地样书的微信读书导入中完成手机实测：脚注、角标及文件名异常目录均消失，
 用户确认采用去灰底后的引文、署名与翻页方案。50项测试、EPUBCheck和本轮兼容修改的独立复核通过。
 其他书籍的自动分片规则及阅读器表现需分别验证。诊断证据与步骤见
 [weread-fix.md](docs/weread-fix.md)。
@@ -83,8 +83,10 @@ EPUB 的 TOC，且是 body 或其匿名 div 下的直接标题。只移动完整
 
 在本目录执行：
 
+以下命令在 AiNiee 源码仓库根目录运行；技能安装包不附带测试目录。
+
 ```powershell
-python -m unittest discover -s tests -v
+python -m pytest 测试/集成/test_publisher_upgrade.py 测试/集成/test_standalone_source_build.py
 ```
 
 测试使用合成文字，不读取或上传书籍内容。
