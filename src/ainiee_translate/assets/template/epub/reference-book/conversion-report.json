@@ -1,0 +1,156 @@
+{
+  "source_name": "source.json (authored example; no OCR)",
+  "source_sha256": "1e63396de573a7f5abd3960cd8e01873d618a4b11704a4550f633f01766d18f7",
+  "epub": "reference.epub",
+  "epub_sha256": "a42734c29815e4bf6e874d84d6ff1e7f8f433b8682045a21113bdaddf53fb38f",
+  "reviewed": true,
+  "selected_pages": [],
+  "extraction": [],
+  "structure_rules": {
+    "punctuation_mode": "full"
+  },
+  "chapter_count": 2,
+  "note_mapping": [
+    {
+      "id": "note-a",
+      "label": "1",
+      "original_label": "原创注 A",
+      "chapter": "chapter-one",
+      "association_evidence": "原创示例：第一章正文引用本章注释。"
+    },
+    {
+      "id": "note-b",
+      "label": "1",
+      "original_label": "原创注 B",
+      "chapter": "chapter-two",
+      "association_evidence": "原创示例：第二章末段引用。"
+    }
+  ],
+  "assets": {
+    "order-image": {
+      "href": "assets/order-image.png",
+      "method": "verified-local-resource",
+      "source": {
+        "id": "order-image",
+        "path": "assets/reading-order.png",
+        "alt": "完整自然段、图片与图注、下一自然段依次排列",
+        "sha256": "251f75ab7e13b4d7ac43f54e1bfa0f73296372d405925eb2e022d956b37a7039"
+      }
+    },
+    "cover-image": {
+      "href": "assets/cover-image.png",
+      "method": "verified-local-resource",
+      "source": {
+        "id": "cover-image",
+        "path": "assets/cover.png",
+        "alt": "封面",
+        "sha256": "1f59d9708044376c7e5c9bfcc8dd962451c5ca9c262d89438d265e69bc2dbaab"
+      }
+    }
+  },
+  "publication": {
+    "images": [
+      {
+        "role": "cover",
+        "file": "cover.xhtml",
+        "asset": {
+          "id": "cover-image",
+          "path": "assets/cover.png",
+          "alt": "封面",
+          "sha256": "1f59d9708044376c7e5c9bfcc8dd962451c5ca9c262d89438d265e69bc2dbaab"
+        }
+      }
+    ],
+    "toc": {
+      "placement": {
+        "before": "chapter-one"
+      },
+      "entries": [
+        {
+          "title": "第一章　文字与图像",
+          "href": "chapter-one.xhtml#chapter-one",
+          "sections": [
+            {
+              "title": "第一节　先接完段落，再放图片",
+              "href": "chapter-one.xhtml#section-image"
+            },
+            {
+              "title": "第二节　引文与正文",
+              "href": "chapter-one.xhtml#section-quote"
+            }
+          ]
+        },
+        {
+          "title": "第二章　表格与注释",
+          "href": "chapter-two.xhtml#chapter-two",
+          "sections": [
+            {
+              "title": "第一节　表格与章末注释",
+              "href": "chapter-two.xhtml#section-table"
+            }
+          ]
+        }
+      ]
+    },
+    "note_numbering": [
+      {
+        "id": "note-a",
+        "chapter": "chapter-one",
+        "label": "1",
+        "original_label": "原创注 A",
+        "body_reference_ids": [
+          "ref-a1"
+        ],
+        "association_evidence": "原创示例：第一章正文引用本章注释。"
+      },
+      {
+        "id": "note-b",
+        "chapter": "chapter-two",
+        "label": "1",
+        "original_label": "原创注 B",
+        "body_reference_ids": [
+          "ref-b1"
+        ],
+        "association_evidence": "原创示例：第二章末段引用。"
+      }
+    ]
+  },
+  "reading_order": [
+    "cover.xhtml",
+    "contents.xhtml",
+    "chapter-one.xhtml",
+    "chapter-two.xhtml"
+  ],
+  "issues": [],
+  "omissions": [],
+  "review_evidence": [
+    "原创示例，以 source.json 的完整段落和关系为依据；未进行 PDF 提取。"
+  ],
+  "checks": {
+    "errors": [],
+    "resource_count": 11,
+    "links_checked": 29,
+    "xhtml_count": 5
+  },
+  "introduced_quote_blocks": [
+    "auto-quote"
+  ],
+  "figure_placements": [
+    {
+      "figure": "figure-order",
+      "after_block": "joined-paragraph",
+      "method": "explicit",
+      "caption_blocks": [],
+      "label": "1",
+      "container": "chapter-one"
+    }
+  ],
+  "epubcheck": "Not run by build; use check --epubcheck JAR.",
+  "reader_validation": "Not performed by build; record actual reader/version.",
+  "style_limits": [
+    "OCR has no reliable font/style information; recovered styles need visual evidence.",
+    "Dot emphasis falls back to underline; chapter breaks depend on reader.",
+    "Quotes use light green, 0.9em and FangSong; the font falls back to serif when unavailable. Reader overrides may change presentation."
+  ],
+  "corrections": []
+}

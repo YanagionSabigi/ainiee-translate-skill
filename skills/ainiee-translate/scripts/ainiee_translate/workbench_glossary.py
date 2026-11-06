@@ -7,6 +7,7 @@ import uuid
 
 from .artifact_io import write_json, digest
 from .glossary import load_locked, lint_locked
+from . import glossary_document as gd
 from .helpers import backup_file
 from .glossary_review_data import load_review_data, term_review_info
 from .workbench_bridge import (runtime, block, package, prepare_project, load_project,
@@ -16,6 +17,40 @@ GROUPS = [('characters', '人物与命名', 'canonical'), ('terms', '术语', 's
           ('non_translate', '禁翻项', 'marker')]
 FIELDS = {'characters': ['render', 'aliases', 'gender', 'note'],
           'terms': ['dst', 'category', 'note', 'keep_source'], 'non_translate': ['category', 'note']}
+
+
+STRUCTURED_GROUPS = [('persons', '人名', 'id'), ('terminology', '术语', 'id'), ('abbreviations', '缩写', 'id'), ('non_translate', '禁翻项', 'marker')]
+
+
+def _value(row, key, default=''):
+    if '.' in key:
+        parent, child = key.split('.', 1)
+        return row.get(parent, {}).get(child, default)
+    return row.get(key, default)
+
+
+def _immutable(row, fields):
+    value = copy.deepcopy(row)
+    for f in fields:
+        key = f['key']
+        if '.' in key:
+            parent, child = key.split('.', 1)
+            if parent in value: value[parent].pop(child, None)
+        else: value.pop(key, None)
+    return value
+
+
+def _structured_fields(group, row):
+    if group == 'persons':
+        keys = ['source_form.text']
+        if 'latin_form' in row: keys.append('latin_form.text')
+        if 'chinese_translation' in row: keys.append('chinese_translation')
+    elif group in ('terminology', 'abbreviations'):
+        keys = ['target_template'] if 'target_template' in row else ['target_form.text']
+    else: return _fields(group, row)
+    fields = [dict(key=k, kind='str') for k in keys + ['note']]
+    if group == 'abbreviations': fields.append(dict(key='keep_source', kind='bool'))
+    return fields
 
 
 def _fields(group, row):
@@ -36,7 +71,7 @@ def _fields(group, row):
 def _blocks(row, fields):
     result = []
     for f in fields:
-        value = row.get(f['key'], False if f['kind'] == 'bool' else [] if f['kind'] == 'list' else '')
+        value = _value(row, f['key'], False if f['kind'] == 'bool' else [] if f['kind'] == 'list' else '')
         if ((f['kind'] == 'bool' and not isinstance(value, bool))
                 or (f['kind'] == 'list' and (not isinstance(value, list) or not all(isinstance(v, str) for v in value)))
                 or (f['kind'] == 'str' and not isinstance(value, str))):
@@ -51,12 +86,16 @@ def _blocks(row, fields):
 
 def _row(data, info):
     rows = data.get(info['group'], [])
+    if info['identity_key'] == 'id':
+        matches = [r for r in rows if r.get('id') == info['identity']]
+        rows = matches
+        info = dict(info, index=0)
     if (not isinstance(rows, list) or info['index'] >= len(rows)
             or not isinstance(rows[info['index']], dict)
             or rows[info['index']].get(info['identity_key']) != info['identity']):
         return None
     row = rows[info['index']]
-    immutable = {k: v for k, v in row.items() if k not in [f['key'] for f in info['fields']]}
+    immutable = _immutable(row, info['fields'])
     if digest(immutable) != info.get('identity_hash'):
         return None
     return row
@@ -64,22 +103,26 @@ def _row(data, info):
 
 def prepare_glossary(locked, output, proposals=None, review_data=None):
     data = load_locked(locked)
+    structured = gd.structured(data)
+    policy = gd.read_policy(locked, data) if structured else None
+    groups = STRUCTURED_GROUPS if structured else GROUPS
     metadata = load_review_data(data.get('terms', []), review_data)
     suggested = load_locked(proposals) if proposals else None
     p = package('术语表校对 · ' + Path(locked).stem,
-                [dict(id=k, title=title) for k, title, _ in GROUPS])
+                [dict(id=k, title=title) for k, title, _ in groups])
     p['review_profile'] = 'glossary'
     binding = dict(kind='glossary', locked=str(Path(locked).resolve()), items={})
-    for group, _, identity_key in GROUPS:
+    if structured: binding['policy_hash'] = data.get('policy_sha256') or digest(policy)
+    for group, _, identity_key in groups:
         for index, row in enumerate(data.get(group, [])):
             identity = row.get(identity_key)
             if not isinstance(identity, str) or not identity:
                 raise ValueError('词条缺少稳定原词身份')
-            iid = f'{group}-{index + 1}'
-            fields = [dict(key='dst', kind='str')] if group == 'terms' else _fields(group, row)
+            iid = row['id'] if structured and group != 'non_translate' else f'{group}-{index + 1}'
+            fields = _structured_fields(group, row) if structured else [dict(key='dst', kind='str')] if group == 'terms' else _fields(group, row)
             before = _blocks(row, fields)
             info = dict(group=group, index=index, identity_key=identity_key, identity=identity, fields=fields)
-            info['identity_hash'] = digest({k: v for k, v in row.items() if k not in [f['key'] for f in fields]})
+            info['identity_hash'] = digest(_immutable(row, fields))
             other = _row(suggested, info) if suggested else None
             proposal = _blocks(other, fields) if other is not None and other != row else None
             if proposal == before:
@@ -90,6 +133,9 @@ def prepare_glossary(locked, output, proposals=None, review_data=None):
                           block('metadata', '\n'.join(f'{k}：{v}' for k, v in row.items() if k not in [f['key'] for f in fields]))],
                 allow_empty_blocks=[f['key'] for f in fields if f['key'] not in ('dst', 'render', 'keep_source')],
                 rationale='逐项核对译名、分类与说明；别名每行一项，“保留原文”使用是或否。', location=identity))
+            if structured and group == 'terminology' and 'target_template' in row:
+                preview = next(t['dst'] for t in gd.runtime_view(data, dict(policy, category_ids=[]))['terms'] if t['id'] == row['id'])
+                p['items'][-1]['evidence'].append(block('preview', '当前模式展开（只读）：' + preview))
             if group == 'terms':
                 item = p['items'][-1]
                 item['term_info'], item['requires_human'] = term_review_info(row, metadata)
@@ -101,6 +147,9 @@ def prepare_glossary(locked, output, proposals=None, review_data=None):
 
 def glossary_targets(binding, locked):
     data = load_locked(locked)
+    if 'policy_hash' in binding and (data.get('policy_sha256') or digest(gd.read_policy(locked, data))) != binding['policy_hash']:
+        raise ValueError('Glossary policy changed; prepare review again')
+    if gd.structured(data): gd.read_policy(locked, data)
     result = []
     for iid, info in binding['items'].items():
         row = _row(data, info)
@@ -143,7 +192,11 @@ def _consume(project, locked, instruction, data, binding, comparison):
                 elif f['kind'] == 'list':
                     value = [line.strip() for line in value.splitlines() if line.strip()]
                 # Do not introduce an empty optional field on a keep decision.
-                if f['key'] in row or value:
+                if '.' in f['key']:
+                    parent, child = f['key'].split('.', 1)
+                    if parent in row or value:
+                        row.setdefault(parent, dict(language='und'))[child] = value
+                elif f['key'] in row or value:
                     row[f['key']] = value
             result['applied'] += 1
         result['results'].append(dict(item_id=entry['item_id'], status=status,
@@ -159,8 +212,11 @@ def _consume(project, locked, instruction, data, binding, comparison):
                 raise ValueError('修改后的词表不符合项目 JSON Schema')
         if any(x['kind'] in ('character_missing_render', 'term_missing_src', 'term_missing_dst') for x in lint_locked(data)):
             raise ValueError('修改后的词表未通过结构检查')
-        backup_file(str(locked))
-        write_json(locked, data)
+        if gd.structured(data):
+            gd.write_document(locked, data)
+        else:
+            backup_file(str(locked))
+            write_json(locked, data)
     write_json(Path(project) / 'applications' / (uuid.uuid4().hex + '.json'),
                dict(instruction=instruction, result=result))
     return result

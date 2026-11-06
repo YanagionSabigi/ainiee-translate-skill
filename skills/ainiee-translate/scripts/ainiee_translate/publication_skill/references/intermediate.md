@@ -47,6 +47,8 @@ Every inline source must appear in `sources`. Literal `text` requires `evidence`
 
 Kinds: `paragraph`, `quote` (no automatic italics), `verse`, `heading` (`level` 2–6), `figure`, `formula`, `table-image`, `table`, `list`, `ordered-list`. Lists use `items` arrays of inline items. Tables use `rows` with cells as strings, inline arrays, or `{"inline":[...],"header":true,"rowspan":2,"colspan":1}`. Spans must be positive integers. Nested line selectors, styles, note links and assets are recursively resolved; selectors must be listed in block sources and literals need evidence. Keep `table_evidence`, optional `header_rows` and caption `inline`. Complex/unsafe HTML stays a table-image candidate. Images/formulas may use `source_region` (`page`, `bbox`, evidence) when no text lines exist.
 
+Text items may use `chemistry: true` with source `evidence` for reviewed chemical typography. Figure blocks may use `figure_label`, or a reviewed `after_block` with `placement_evidence`; detached paragraph captions use `caption_for`. Build moves each figure and its captions after its reference paragraph, and reports placements without changing the input JSON. See [content-layout.md](content-layout.md) before reviewing chemistry or figure positions.
+
 ### Assets
 
 Block `asset` or inline `asset` is an object:
@@ -76,4 +78,4 @@ Publication mode assigns numeric labels by first body reference within each chap
 
 ## Normalized result (`epub-book/1`)
 
-`normalize` writes `book.json` with resolved inline spans, per-block provenance, notes, extraction summary and plan evidence. Build reads this data without further language inference. Preserve `review.json` for editing; edit it rather than bypassing source checks in `book.json`. Re-normalize after revisions. EPUB contains only publication resources and original-language reading text, never cache paths, tokens or source-machine absolute paths.
+`normalize` writes `book.json` with resolved inline spans, per-block provenance, notes, extraction summary and plan evidence. Build uses this resolved data and applies the limited adjacent-paragraph quotation rule described in SKILL.md, reporting automatically selected IDs in `conversion-report.json` under `introduced_quote_blocks`. This presentation step leaves the input JSON and text unchanged; an existing reviewed book can be rebuilt without repeating OCR. Preserve `review.json` for editing; edit it rather than bypassing source checks in `book.json`. Re-normalize after review revisions. EPUB contains only publication resources and original-language reading text, never cache paths, tokens or source-machine absolute paths.

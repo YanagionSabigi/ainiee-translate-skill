@@ -31,6 +31,10 @@ CHECKED_STATUSES = (1, 2)
 
 
 def check_items(items: list[dict], locked: dict) -> list[dict]:
+    from .glossary_document import runtime_view
+    locked = runtime_view(locked)
+    if locked.get('_structured'):
+        return _check_structured(items, locked)
     issues = []
     names = []
     for c in locked.get("characters", []):
@@ -67,12 +71,39 @@ def main(argv=None):
     ap.add_argument("cache")
     ap.add_argument("locked")
     a = ap.parse_args(argv)
-    with open(a.locked, encoding="utf-8") as f:
-        locked = json.load(f)
+    from .glossary_document import load_runtime
+    locked = load_runtime(a.locked)
     issues = check_items(_items_for_check(a.cache), locked)
     print(json.dumps(issues, ensure_ascii=False, indent=2))
     print(f"\n{len(issues)} issue(s)")
 
+
+
+
+
+def _check_structured(items, locked):
+    from .glossary_document import recognition_key
+    issues = [i for i in locked['_issues'] if i['kind'] not in ('uncategorized', 'ambiguous_source')]
+    forms = {}
+    for row in locked['characters'] + locked['terms']:
+        for form in [row.get('canonical', row.get('src'))] + row.get('aliases', []):
+            forms.setdefault(recognition_key(form), {})[row['id']] = row
+    for it in items:
+        if it.get('translation_status') not in CHECKED_STATUSES: continue
+        src, tgt = it.get('source_text', ''), it.get('translated_text') or ''
+        if src.strip() and not tgt.strip():
+            issues.append(dict(kind='empty_translation', text_index=it['text_index']))
+            continue
+        for form, candidates in forms.items():
+            if not latin_boundary_search(form, src): continue
+            if len(candidates) > 1:
+                issues.append(dict(kind='ambiguous_source', text_index=it['text_index'], source=form, candidate_ids=sorted(candidates)))
+                continue
+            row = next(iter(candidates.values()))
+            target = row.get('render', row.get('dst'))
+            if target and not latin_boundary_search(target, tgt):
+                issues.append(dict(kind='target_not_preserved', text_index=it['text_index'], id=row['id'], detail=target))
+    return issues
 
 if __name__ == "__main__":
     main()

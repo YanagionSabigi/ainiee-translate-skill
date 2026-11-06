@@ -1,0 +1,105 @@
+% Rose Pine Dawn — shared theme core (no fonts, no class-specific headings).
+% Fonts: fonts-en.tex (pdfLaTeX) or fonts-zh.tex (XeLaTeX) from the project preamble.
+% English: pdfLaTeX. Chinese: XeLaTeX.
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric}
+
+\usepackage[a4paper, margin=2.0cm, headheight=22pt]{geometry}
+
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{booktabs,longtable,array,colortbl}
+
+\usepackage{graphicx}
+\extrafloats{100}
+\graphicspath{{imgs/}{images/}}
+\newcommand{\fig}[1]{%
+  \includegraphics[width=0.48\textwidth,height=0.26\textheight,keepaspectratio]{#1}%
+}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{bookmark}
+
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.8em}
+
+\usepackage{microtype}
+\emergencystretch=3em
+
+\usepackage[numbers,sort&compress]{natbib}
+
+\usepackage{xcolor}
+\definecolor{rpbase}{HTML}{faf4ed}
+\definecolor{rpsurface}{HTML}{fffaf3}
+\definecolor{rpoverlay}{HTML}{f2e9e1}
+\definecolor{rpmuted}{HTML}{9893a5}
+\definecolor{rpsubtle}{HTML}{797593}
+\definecolor{rptext}{HTML}{575168}
+\definecolor{rplove}{HTML}{b4637a}
+\definecolor{rpgold}{HTML}{ea9d34}
+\definecolor{rprose}{HTML}{d7827e}
+\definecolor{rppine}{HTML}{286983}
+\definecolor{rpfoam}{HTML}{56949f}
+\definecolor{rpiris}{HTML}{907aa9}
+
+\definecolor{chaptercolor}{HTML}{286983}
+\definecolor{sectioncolor}{HTML}{575168}
+\definecolor{subsectioncolor}{HTML}{907aa9}
+\definecolor{linkcolor}{HTML}{b4637a}
+\definecolor{citecolor}{HTML}{286983}
+\definecolor{urlcolor}{HTML}{907aa9}
+\definecolor{rulecolor}{HTML}{f2e9e1}
+\definecolor{boxframe}{HTML}{56949f}
+\definecolor{boxbg}{HTML}{f2e9e1}
+\definecolor{coverbg}{HTML}{faf4ed}
+\definecolor{covertxt}{HTML}{575168}
+\definecolor{coveraccent}{HTML}{d7827e}
+\definecolor{coverpine}{HTML}{286983}
+\definecolor{coveriris}{HTML}{907aa9}
+
+\linespread{1.30}\selectfont
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{1.5em}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=linkcolor,
+  urlcolor=urlcolor,
+  citecolor=citecolor,
+  bookmarksnumbered=true,
+  bookmarksopen=true,
+  bookmarksopenlevel=1,
+  pdfstartview=FitH
+}
+
+\usepackage{caption}
+\captionsetup{
+  font=normalsize,
+  labelfont={bf,color=chaptercolor},
+  textfont={color=rptext},
+  labelsep=quad,
+  skip=4pt,
+  justification=centering
+}
+
+\usepackage{float}
+\floatplacement{figure}{htbp}
+
+% skins only — avoid tcolorbox "most" (listingsutf8)
+\usepackage[skins]{tcolorbox}
+\newtcolorbox{formulabox}[1][]{%
+  enhanced, colback=boxbg, colframe=boxframe,
+  boxrule=0.8pt, arc=3pt, left=6pt, right=6pt, top=4pt, bottom=4pt, #1
+}
+\newtcolorbox{resultbox}[1][]{%
+  enhanced, colback=rpgold!8, colframe=rpgold!80!black,
+  boxrule=0.8pt, arc=3pt, left=6pt, right=6pt, top=4pt, bottom=4pt, #1
+}
+
+\renewcommand{\thefootnote}{\textcolor{rplove}{\arabic{footnote}}}

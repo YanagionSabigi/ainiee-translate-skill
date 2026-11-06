@@ -12,7 +12,7 @@ New-Item -ItemType Directory -Path local -Force | Out-Null
 .venv/Scripts/python.exe build.py --check
 ```
 
-独立克隆已携带 `publication_skill`，安装和运行不要求另行克隆 publisher、不依赖原作者电脑路径。若工作区存在兄弟目录 `pdf-to-epub-skill`，开发构建优先使用那个开发副本；否则使用仓库随附版本。
+独立克隆已携带 `publication_skill`，安装和运行不要求另行克隆 publisher、不依赖原作者电脑路径。构建始终使用仓库随附版本；运行时可显式设置 `AINIEE_PDF_TO_EPUB` 使用其他兼容副本。
 
 本地 MinerU 没有内置安装地址。请仅在本机环境设置 `AINIEE_MINERU_ROOT`，或在调用 publisher 时传 `--mineru-local-root`；安装中的 CLI、配置和环境脚本也可分别显式指定。完整操作见 [PDF 工作流](../skills/ainiee-translate/references/pdf_workflow.md) 与 [MinerU 配置](../skills/ainiee-translate/scripts/ainiee_translate/publication_skill/references/mineru.md)。PDF 格式依赖、本地模型、Java/EPUBCheck、模板字体及编译器需由测试环境准备。
 

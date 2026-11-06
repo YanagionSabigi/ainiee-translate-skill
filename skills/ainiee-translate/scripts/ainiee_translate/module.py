@@ -15,6 +15,7 @@ import shutil
 import time
 
 from . import helpers
+from . import glossary_document as gd
 
 SCHEMA_VERSION = 1
 
@@ -62,7 +63,7 @@ def list_modules() -> list[dict]:
                         "source_language": mj.get("source_language", ""),
                         "target_language": mj.get("target_language", ""),
                         "has_polish": os.path.exists(os.path.join(root, name, POLISH_PROMPT)),
-                        "active": name == active})
+                        "active": name == active, **{k: v for k, v in show_module(name).items() if k not in ("name", "module", "files")}})
     return out
 
 
@@ -72,15 +73,41 @@ def show_module(name: str) -> dict:
         raise FileNotFoundError(f"module not found: {name}")
     mj = _read_json(os.path.join(d, "module.json"), {}) or {}
     locked = _read_json(os.path.join(d, GLOSSARY_LOCKED), {}) or {}
+    extra = {}
+    if gd.structured(locked):
+        gd.validate_document(locked)
+        extra = dict(glossary_format=locked['schema_version'], persons=len(locked['persons']),
+                     terminology=len(locked['terminology']), abbreviations=len(locked['abbreviations']),
+                     categories=len(locked['categories']), person_name_mode=gd.read_policy(os.path.join(d, GLOSSARY_LOCKED), locked)['person_name_mode'])
     files = sorted(f for f in os.listdir(d) if os.path.isfile(os.path.join(d, f)))
     return {"name": name, "module": mj, "files": files,
             "terms": len(locked.get("terms", [])),
             "characters": len(locked.get("characters", [])),
-            "non_translate": len(locked.get("non_translate", []))}
+            "non_translate": len(locked.get("non_translate", [])), **extra}
 
 
-def create_module(name: str, source_language="", target_language="", title="") -> str:
+def create_module(name: str, source_language="", target_language="", title="", *, name_mode="D", categories=None, category_ids=None) -> str:
     d = module_dir(name)
+    document = gd.empty_document()
+    if categories is not None:
+        if isinstance(categories, (str, os.PathLike)):
+            with open(categories, encoding='utf8') as stream:
+                categories = json.load(stream)
+        if isinstance(categories, dict) and set(categories) != {'categories'}:
+            raise ValueError('Categories import must be an array or an object with only categories')
+        document['categories'] = categories['categories'] if isinstance(categories, dict) else categories
+    policy = dict(schema_version='1.0.0', person_name_mode=name_mode)
+    if category_ids: policy['category_ids'] = list(category_ids)
+    gd.validate_document(document)
+    gd.runtime_view(document, policy)
+    if os.path.exists(os.path.join(d, 'module.json')):
+        existing = gd.read_document(os.path.join(d, GLOSSARY_LOCKED))
+        mj = _read_json(os.path.join(d, 'module.json'))
+        if (not gd.structured(existing) or gd.read_policy(os.path.join(d, GLOSSARY_LOCKED), existing) != policy
+                or (categories is not None and existing['categories'] != document['categories'])
+                or any(value and mj.get(key) != value for key, value in [('source_language',source_language),('target_language',target_language),('title',title)])):
+            raise ValueError('module already exists with conflicting configuration: ' + name)
+        return d
     os.makedirs(d, exist_ok=True)
     mj_path = os.path.join(d, "module.json")
     if not os.path.exists(mj_path):
@@ -93,8 +120,11 @@ def create_module(name: str, source_language="", target_language="", title="") -
             open(p, "w", encoding="utf-8").close()
     gl = os.path.join(d, GLOSSARY_LOCKED)
     if not os.path.exists(gl):
-        with open(gl, "w", encoding="utf-8") as f:
-            json.dump({"characters": [], "terms": [], "non_translate": []}, f, ensure_ascii=False, indent=2)
+        gd.write_document(gl, document, policy)
+    mj = _read_json(mj_path)
+    mj.update(glossary_format='1.0.0', glossary_policy=gd.policy_path(gl).name)
+    from .artifact_io import write_json
+    write_json(mj_path, mj)
     return d
 
 
@@ -123,6 +153,9 @@ def load_module(name: str, work: str | None = None) -> dict:
     d = module_dir(name)
     if not os.path.isdir(d):
         raise FileNotFoundError(f"module not found: {name}")
+    gl_path = os.path.join(d, GLOSSARY_LOCKED)
+    gl = gd.read_document(gl_path) if os.path.exists(gl_path) else {}
+    policy = gd.read_policy(gl_path, gl) if gd.structured(gl) else None
     os.makedirs(home(), exist_ok=True)
     with open(os.path.join(home(), "active.json"), "w", encoding="utf-8") as f:
         json.dump({"active_module": name}, f, ensure_ascii=False, indent=2)
@@ -137,9 +170,12 @@ def load_module(name: str, work: str | None = None) -> dict:
         for src_name, dst_name in mapping.items():
             if _copy_in(os.path.join(d, src_name), os.path.join(wdir, dst_name)):
                 copied.append(dst_name)
+        if policy is not None:
+            _copy_in(str(gd.policy_path(gl_path)), str(gd.policy_path(os.path.join(wdir, GLOSSARY_LOCKED))))
+            copied.append(gd.policy_path(gl_path).name)
         with open(os.path.join(wdir, "active_module.json"), "w", encoding="utf-8") as f:
             json.dump({"module": name, "module_dir": d,
-                       "loaded_at": time.strftime("%Y-%m-%d %H:%M:%S")}, f, ensure_ascii=False, indent=2)
+                       "policy_sha256": gl.get("policy_sha256"), "loaded_at": time.strftime("%Y-%m-%d %H:%M:%S")}, f, ensure_ascii=False, indent=2)
     return {"module": name, "module_dir": d, "work": work, "copied": copied}
 
 
@@ -154,6 +190,9 @@ def main(argv=None):
     create.add_argument("--source-language", default="")
     create.add_argument("--target-language", default="")
     create.add_argument("--title", default="")
+    create.add_argument('--name-mode', choices=list('ABCD'), default='D')
+    create.add_argument('--categories')
+    create.add_argument('--category', dest='category_ids', action='append')
     load = sub.add_parser("load")
     load.add_argument("name")
     load.add_argument("--work", default=None)
@@ -164,12 +203,12 @@ def main(argv=None):
         elif a.cmd == "show":
             print(json.dumps(show_module(a.name), ensure_ascii=False, indent=2))
         elif a.cmd == "create":
-            d = create_module(a.name, a.source_language, a.target_language, a.title)
+            d = create_module(a.name, a.source_language, a.target_language, a.title, name_mode=a.name_mode, categories=a.categories, category_ids=a.category_ids)
             print(f"created module -> {d}")
         elif a.cmd == "load":
             r = load_module(a.name, a.work)
             print(json.dumps(r, ensure_ascii=False))
-    except (FileNotFoundError, OSError) as e:
+    except (FileNotFoundError, OSError, ValueError) as e:
         ap.error(str(e))
 
 

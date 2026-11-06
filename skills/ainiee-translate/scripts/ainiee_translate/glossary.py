@@ -13,6 +13,7 @@ import sys
 import os
 
 from . import glossary_seed, glossary_clean
+from . import glossary_document as gd
 from .glossary_clean import _HON_BARE
 from .helpers import normalize_apostrophes, backup_file
 
@@ -42,6 +43,9 @@ def build_locked(seed: dict) -> dict:
 
 
 def write_locked(locked: dict, path: str) -> None:
+    if gd.structured(locked):
+        gd.write_document(path, locked)
+        return
     with open(path, "w", encoding="utf-8") as f:
         json.dump(locked, f, ensure_ascii=False, indent=2)
 
@@ -49,6 +53,7 @@ def write_locked(locked: dict, path: str) -> None:
 def load_locked(path: str, *, schema_path: str | None = None) -> dict:
     with open(path, encoding="utf-8") as f:
         locked = json.load(f)
+    gd.validate_document(locked)
     schema_path = schema_path or os.environ.get('AINIEE_GLOSSARY_SCHEMA')
     if schema_path:
         from jsonschema import Draft202012Validator
@@ -70,6 +75,10 @@ def filter_locked(locked: dict, texts: list[str]) -> dict:
     """Keep only characters/terms whose name (any alias) or `src` occurs in `texts`.
     non_translate markers are always kept. Adds a `_meta` block with the counts."""
     corpus = normalize_apostrophes("\n".join(texts)).lower()
+    if gd.structured(locked):
+        keep = {r['id'] for g in gd.GROUPS for r in locked[g]
+                if any(_present(n, corpus) for n in gd.recognition(r))}
+        return gd.reference_subset(locked, keep)
     chars = [c for c in locked.get("characters", [])
              if any(_present(n, corpus)
                     for n in [c.get("canonical"), c.get("render")] + list(c.get("aliases") or []) if n)]
@@ -97,6 +106,8 @@ def _texts_from_files(paths: list[str]) -> list[str]:
 
 # ----------------------------------------------------------------- lint ----
 def lint_locked(locked: dict) -> list[dict]:
+    if gd.structured(locked):
+        return gd.runtime_view(locked)['_issues']
     issues = []
     chars = locked.get("characters", []) or []
     terms = locked.get("terms", []) or []
@@ -169,7 +180,7 @@ def _known(locked: dict) -> set[str]:
 def merge_newterms(locked: dict, names: list[str], category: str = "new") -> tuple[list[str], list[str]]:
     """Add each new name as a keep_source term unless already known (any
     character name/alias or term src, apostrophe- and case-insensitive)."""
-    known = _known(locked)
+    known = _known(gd.runtime_view(locked))
     added, skipped = [], []
     for raw in names:
         n = raw.strip().strip(",;")
@@ -180,6 +191,12 @@ def merge_newterms(locked: dict, names: list[str], category: str = "new") -> tup
             skipped.append(n)
             continue
         known.add(k)
+        if gd.structured(locked):
+            import uuid
+            locked['terminology'].append(dict(id='term.' + uuid.uuid4().hex,
+                source_form=dict(text=n, language='und'), note='Unconfirmed candidate; review'))
+            added.append(n)
+            continue
         locked.setdefault("terms", []).append(
             {"src": n, "dst": n, "keep_source": True, "category": category,
              "note": "auto: kept verbatim by a parallel agent; review"})
@@ -220,13 +237,19 @@ def main(argv=None):
         write_locked(build_locked(seed), a.out)
         print(f"locked glossary -> {a.out}")
     elif a.cmd == "filter":
-        out = filter_locked(load_locked(a.locked), _texts_from_files(a.sources))
+        original = load_locked(a.locked)
+        out = filter_locked(original, _texts_from_files(a.sources))
+        if gd.structured(out):
+            gd.write_document(a.out, out, gd.read_policy(a.locked, original))
+            print(f'filtered glossary -> {a.out}')
+            return 0
         write_locked(out, a.out)
         k, t = out["_meta"]["kept"], out["_meta"]["total"]
         print(f"filtered glossary -> {a.out}: characters {k['characters']}/{t['characters']}, "
               f"terms {k['terms']}/{t['terms']}")
     elif a.cmd == "lint":
-        issues = lint_locked(load_locked(a.locked))
+        data = load_locked(a.locked)
+        issues = gd.load_runtime(a.locked)['_issues'] if gd.structured(data) else lint_locked(data)
         print(json.dumps(issues, ensure_ascii=False, indent=1))
         print(f"\n{len(issues)} issue(s)")
         return 1 if issues else 0

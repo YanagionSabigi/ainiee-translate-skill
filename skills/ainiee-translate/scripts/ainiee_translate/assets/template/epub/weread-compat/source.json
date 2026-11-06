@@ -1,0 +1,170 @@
+{
+  "schema": "epub-book/1",
+  "source_name": "source.json (authored compatibility example)",
+  "reviewed": true,
+  "metadata": {
+    "title": "微信读书兼容示例：目录、引文与注释",
+    "language": "zh-CN"
+  },
+  "labels": {
+    "contents": "目录",
+    "notes": "本章注释",
+    "return": "返回原文"
+  },
+  "chapters": [
+    {
+      "id": "ch1",
+      "title": "第一章　完整的阅读顺序",
+      "blocks": [
+        {
+          "id": "section-one",
+          "kind": "heading",
+          "inline": [
+            {
+              "text": "第一节　引文与署名"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "id": "opening",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "这是作者编写的兼容示例。脚注引用应留在正文中。"
+            },
+            {
+              "note": "n1",
+              "id": "r1",
+              "label": "1"
+            }
+          ]
+        },
+        {
+          "id": "quoted",
+          "kind": "quote",
+          "inline": [
+            {
+              "text": "“引用可以自然跨过屏幕边界，文字、段落和署名仍按原来的顺序保留。阅读器换页不应产生新的目录项。”"
+            }
+          ]
+        },
+        {
+          "id": "credit",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "示例作者，《阅读札记》"
+            }
+          ]
+        },
+        {
+          "id": "section-two",
+          "kind": "heading",
+          "inline": [
+            {
+              "text": "第二节　跨文件的注释往返"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "id": "continuation",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "这一完整自然段位于分片之后，再次引用同一注释。"
+            },
+            {
+              "note": "n1",
+              "id": "r2",
+              "label": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ch2",
+      "title": "第二章　编号重置与表格",
+      "blocks": [
+        {
+          "id": "second-body",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "第二章的注释编号重新从1开始。"
+            },
+            {
+              "note": "n2",
+              "id": "r3",
+              "label": "1"
+            }
+          ]
+        },
+        {
+          "id": "table",
+          "kind": "table",
+          "table_evidence": "作者定义的三行数据",
+          "header_rows": 1,
+          "rows": [
+            [
+              "条目",
+              "处理"
+            ],
+            [
+              "目录",
+              "同源NCX"
+            ],
+            [
+              "注释",
+              "保留往返"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "id": "n1",
+      "chapter": "ch1",
+      "label": "1",
+      "blocks": [
+        {
+          "id": "note-one",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "这是第一章唯一的注释。两处引用均应能够独立返回。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n2",
+      "chapter": "ch2",
+      "label": "1",
+      "blocks": [
+        {
+          "id": "note-two",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "这是第二章唯一的注释。"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "issues": [],
+  "selected_pages": [],
+  "extraction": [],
+  "structure_rules": {},
+  "omissions": [],
+  "review_evidence": [
+    "Author-defined synthetic text; no PDF extraction or external book content."
+  ]
+}

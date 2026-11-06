@@ -275,6 +275,20 @@ def _compile_notes(book):
              'association_evidence': notes[nid].get('association_evidence')} for nid in order]
 
 
+def number_notes_in_reading_order(book):
+    """Refresh publication numbering after presentation moves bound figures."""
+    note_ids = {note['id'] for note in book['notes']}
+    for group in book['chapters'] + book['notes']:
+        for block in group['blocks']:
+            for ref in _items(block):
+                if ref['note'] not in note_ids:
+                    raise ValueError('Missing note body: ' + str(ref['note']))
+    if book.get('publication'):
+        book['publication']['note_numbering'] = _compile_notes(book)
+    elif book.get('schema') == 'epub-book/2':
+        _compile_notes(book)
+
+
 def apply_publication(book, work):
     """Return a policy-compiled copy; errors identify unresolved structure only."""
     book = deepcopy(book)

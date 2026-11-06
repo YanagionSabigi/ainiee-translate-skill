@@ -28,6 +28,8 @@ check is per-occurrence, so it also catches a name that is correct in one spot
 of a segment but transliterated in another (which verify's per-segment
 membership test misses).
 """
+from .glossary_document import load_runtime, runtime_view, recognition_key
+
 import re
 
 from .helpers import latin_boundary_search, normalize_apostrophes
@@ -72,6 +74,7 @@ def _proper_noun_vocab(items):
 
 
 def _glossary_known(locked):
+    locked = runtime_view(locked or {})
     known = set()
     if not locked:
         return known
@@ -80,8 +83,8 @@ def _glossary_known(locked):
             if n:
                 known.add(normalize_apostrophes(n).lower())
     for t in locked.get("terms", []):
-        if t.get("src"):
-            known.add(normalize_apostrophes(t["src"]).lower())
+        for form in [t.get("src")] + t.get('aliases', []):
+            if form: known.add(normalize_apostrophes(form).lower())
     return known
 
 
@@ -142,6 +145,7 @@ def find_untranslated_terms(items, locked):
 
     Returns [{src, dst, count, segments}], status 1 + 2, per occurrence.
     """
+    locked = runtime_view(locked or {})
     terms = []
     for t in (locked or {}).get("terms", []):
         src, dst = t.get("src", ""), t.get("dst", "")
@@ -149,6 +153,9 @@ def find_untranslated_terms(items, locked):
             continue
         if re.search(r"[A-Za-z]", src):  # only English-source terms can "leak" as English
             terms.append((src, dst))
+    if locked.get('_structured'):
+        ambiguous = {i['source'] for i in locked['_issues'] if i['kind'] == 'ambiguous_source'}
+        terms = [(src, dst) for src, dst in terms if recognition_key(src) not in ambiguous]
     hits = {}
     for it in items:
         if it.get("translation_status") not in CHECKED_STATUSES:
@@ -253,9 +260,10 @@ def main(argv=None):
     items = _items(a.cache)
     locked = None
     if a.locked:
-        with open(a.locked, encoding="utf-8") as f:
-            locked = json.load(f)
+        locked = load_runtime(a.locked)
     result = {}
+    if locked and locked.get('_structured'):
+        result['glossary_issues'] = locked['_issues']
     summary = []
     if a.mode in ("discover", "all"):
         d = discover_proper_nouns(items, locked)

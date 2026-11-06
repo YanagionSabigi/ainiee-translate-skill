@@ -1,0 +1,301 @@
+{
+  "schema": "epub-book/1",
+  "source_name": "source.json (authored example; no OCR)",
+  "reviewed": true,
+  "metadata": {
+    "title": "阅读的秩序：EPUB 排版示例",
+    "language": "zh-CN"
+  },
+  "labels": {
+    "contents": "目录",
+    "notes": "本章注释",
+    "return": "返回原文"
+  },
+  "chapters": [
+    {
+      "id": "chapter-one",
+      "title": "第一章　文字与图像",
+      "blocks": [
+        {
+          "id": "intro",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "本书用原创短文演示封面、分层目录、独立章节、章末注释、引文、插图和语义表格。它是排版参照，不是 OCR 转换质量的证明。"
+            }
+          ]
+        },
+        {
+          "id": "section-image",
+          "kind": "heading",
+          "inline": [
+            {
+              "text": "第一节　先接完段落，再放图片"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "id": "figure-order",
+          "kind": "figure",
+          "inline": [
+            {
+              "text": "图1：完整自然段结束后，图片与图注一起出现；下一自然段随后开始。"
+            }
+          ],
+          "after_block": "joined-paragraph",
+          "placement_evidence": "原创示例：完整段落由 source.json 中单一段落定义，不能按视觉换页拆开。",
+          "asset": {
+            "id": "order-image",
+            "path": "assets/reading-order.png",
+            "alt": "完整自然段、图片与图注、下一自然段依次排列",
+            "sha256": "251f75ab7e13b4d7ac43f54e1bfa0f73296372d405925eb2e022d956b37a7039"
+          }
+        },
+        {
+          "id": "joined-paragraph",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "图1展示了本段与插图的正确顺序。即使原 PDF 在这句话之后换页，或者把插图浮动到页面中央，这里仍然属于同一个自然段，必须先把跨页的后半段接回来，再放置图片和图注。读者应当连续读完这段话，直到最后这个句号。"
+            },
+            {
+              "note": "note-a",
+              "id": "ref-a1",
+              "label": "9"
+            }
+          ]
+        },
+        {
+          "id": "next-paragraph",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "这是下一自然段。插图与图注已经放在上一自然段之后，不会打断其中的句子。"
+            }
+          ]
+        },
+        {
+          "id": "section-quote",
+          "kind": "heading",
+          "inline": [
+            {
+              "text": "第二节　引文与正文"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "id": "quote-intro",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "示例作者说："
+            }
+          ]
+        },
+        {
+          "id": "auto-quote",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "“书页的边界会随字号改变，完整句子的联系却应当保留。阅读的顺序，由文字的意义决定。”"
+            }
+          ]
+        },
+        {
+          "id": "after-quote",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "这段恢复正文样式。上面的引文采用仿宋字体、正文的 90% 字号和淡绿色（#79a88a）；设备没有仿宋时使用备用衬线字体。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chapter-two",
+      "title": "第二章　表格与注释",
+      "blocks": [
+        {
+          "id": "intro2",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "较大的章标题用于区分章节；小节标题用于组织章内内容。目录既能在正文中点击，也能通过阅读器的导航菜单访问。"
+            }
+          ]
+        },
+        {
+          "id": "section-table",
+          "kind": "heading",
+          "inline": [
+            {
+              "text": "第一节　表格与章末注释"
+            }
+          ],
+          "level": 2
+        },
+        {
+          "id": "table-lead",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "下表展示各类元素的检查方法。表格保留真实的行列和表头，文字可以选择与检索。"
+            }
+          ]
+        },
+        {
+          "id": "table-checks",
+          "kind": "table",
+          "header_rows": 1,
+          "table_evidence": "原创示例，三列表头与三个数据行由作者定义。",
+          "inline": [
+            {
+              "text": "表1：排版元素检查表"
+            }
+          ],
+          "rows": [
+            [
+              "元素",
+              "期望位置",
+              "核对方式"
+            ],
+            [
+              "插图",
+              "完整自然段之后",
+              "图注与图片一起核对"
+            ],
+            [
+              "注释",
+              "所属章节结尾",
+              "逐个检查跳转与返回"
+            ],
+            [
+              "引文",
+              "引导语之后",
+              "检查字体、字号和颜色"
+            ]
+          ]
+        },
+        {
+          "id": "explicit-quote",
+          "kind": "quote",
+          "inline": [
+            {
+              "text": "“这是一段在审校时明确标记的引文。它与自动识别的引文采用相同样式。”"
+            }
+          ]
+        },
+        {
+          "id": "chapter-two-end",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "本章的注释从 1 重新编号，放在本章最后一段正文之后。"
+            },
+            {
+              "note": "note-b",
+              "id": "ref-b1",
+              "label": "9"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "id": "note-a",
+      "chapter": "chapter-one",
+      "label": "8",
+      "original_label": "原创注 A",
+      "association_evidence": "原创示例：第一章正文引用本章注释。",
+      "blocks": [
+        {
+          "id": "note-a-text",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "这条注释位于第一章末尾。点击“返回原文”，可以回到本章正文中的注释引用处。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "note-b",
+      "chapter": "chapter-two",
+      "label": "6",
+      "original_label": "原创注 B",
+      "association_evidence": "原创示例：第二章末段引用。",
+      "blocks": [
+        {
+          "id": "note-b-text",
+          "kind": "paragraph",
+          "inline": [
+            {
+              "text": "这条注释属于第二章，所以重新从 1 编号。第一章的编号不会延续到这里。"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "issues": [],
+  "selected_pages": [],
+  "extraction": [],
+  "structure_rules": {
+    "punctuation_mode": "full"
+  },
+  "omissions": [],
+  "review_evidence": [
+    "原创示例，以 source.json 的完整段落和关系为依据；未进行 PDF 提取。"
+  ],
+  "publication": {
+    "images": [
+      {
+        "role": "cover",
+        "file": "cover.xhtml",
+        "asset": {
+          "id": "cover-image",
+          "path": "assets/cover.png",
+          "alt": "封面",
+          "sha256": "1f59d9708044376c7e5c9bfcc8dd962451c5ca9c262d89438d265e69bc2dbaab"
+        }
+      }
+    ],
+    "toc": {
+      "placement": {
+        "before": "chapter-one"
+      },
+      "entries": [
+        {
+          "title": "第一章　文字与图像",
+          "href": "chapter-one.xhtml#chapter-one",
+          "sections": [
+            {
+              "title": "第一节　先接完段落，再放图片",
+              "href": "chapter-one.xhtml#section-image"
+            },
+            {
+              "title": "第二节　引文与正文",
+              "href": "chapter-one.xhtml#section-quote"
+            }
+          ]
+        },
+        {
+          "title": "第二章　表格与注释",
+          "href": "chapter-two.xhtml#chapter-two",
+          "sections": [
+            {
+              "title": "第一节　表格与章末注释",
+              "href": "chapter-two.xhtml#section-table"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -2,7 +2,7 @@
 
 ## Default: local MinerU Standard
 
-`--backend mineru-local` is the default. It runs the local CLI with Standard extraction, preserves the complete structured archive and resources, and retries structurally suspect pages once with Advanced. See [mineru.md](mineru.md) for local constraints, continuation, batch ownership and return schemas. Extraction output remains a review candidate. Detailed content stays in local artifacts; conversation feedback contains only status, page numbers, counts and conclusions.
+`--backend mineru-local` is the default. It runs the local CLI with Standard extraction, preserves the complete structured archive and resources, and retries structurally suspect pages once with Advanced. See [mineru.md](mineru.md) for local constraints, continuation, batch ownership and return schemas. Extraction output remains a review candidate. Preserve complete artifacts locally and load relevant source pages, images, text and intermediate records into the conversation model when needed for review; feedback may include the content and evidence needed to explain findings. The local extraction backend and conversation-model review are separate stages.
 
 `--backend mineru` preserves the explicit cloud v4 batch API, subject to upload authorization. Its `vlm` default and `--mineru-model pipeline` option apply to that cloud backend. `--backend local` preserves the existing PyMuPDF/Tesseract engine. PyMuPDF is also required for source inspection, page/region derivatives, geometry and resource recovery; Tesseract is optional.
 
