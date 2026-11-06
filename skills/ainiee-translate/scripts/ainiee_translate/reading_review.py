@@ -2,6 +2,7 @@
 import copy
 from pathlib import Path
 from .artifact_io import text_sha256, sha256, digest
+from .glossary_document import load_runtime
 from .reading_round import (load_round, load_issues, load_segments, current_items, round_lock, read,
                             child, record, revision, immutable, save_state, item_identity)
 from .weread_notes import new_issue
@@ -49,7 +50,7 @@ def export_assessment_tasks(round_dir, cache_path, *, issue_ids=None):
         tasks=record('reading-assessment-tasks/1',r,task_revision=revision(),issues=rows,
                      prompt_sha256=manifest['prompt_sha256'],glossary_sha256=manifest['glossary_sha256'],
                      prompt=child(round_dir,'edition/prompt.txt').read_text(encoding='utf8'),
-                     glossary=read(child(round_dir,'edition/glossary.locked.json')),
+                     glossary=load_runtime(child(round_dir,'edition/glossary.locked.json')),
                      cache_path=str(Path(cache_path).resolve()),source_path=manifest['source_path'],source_sha256=manifest['source_sha256'])
         immutable(round_dir,'tasks',tasks['task_revision'],tasks)
         save_state(round_dir,r,issues)

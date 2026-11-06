@@ -233,6 +233,12 @@ def _freeze_round(cache_path, epub_path, source_path, *, storage_path, round_dir
                               (Path(glossary_path),'glossary.locked.json'), (Path(prompt_path),'prompt.txt'),
                               (source_path, 'source' + source_path.suffix.lower())]:
                 shutil.copyfile(src, edition / dest)
+            from .glossary_document import read_document, read_policy, structured, policy_path
+            glossary_document = read_document(glossary_path)
+            if structured(glossary_document):
+                read_policy(glossary_path, glossary_document)
+                if policy_path(glossary_path).exists():
+                    shutil.copyfile(policy_path(glossary_path), policy_path(edition/'glossary.locked.json'))
             manifest = record('reading-edition/1', r, epub_sha256=sha256(epub_path), cache_sha256=sha256(cache_path),
                               source_sha256=sha256(source_path), glossary_sha256=sha256(glossary_path),
                               prompt_sha256=sha256(prompt_path), source_path=str(source_path.resolve()),

@@ -45,6 +45,8 @@ a sentence-scale rewrite (offending >= REWRITE_MIN Han chars) must keep its Han
 length within REWRITE_RATIO of the original, so a rewrite cannot silently drop
 or pad content.
 """
+from .glossary_document import load_runtime, runtime_view
+
 import argparse
 import collections
 import datetime
@@ -169,9 +171,9 @@ def load_rules(paths: Paths, locked: str | None = None) -> Rules:
     locked = locked or cfg.get("glossary") or os.path.join(os.path.dirname(os.path.abspath(paths.cache)),
                                                              "glossary.locked.json")
     if cfg.get("glossary_settled", True) and locked and os.path.exists(locked):
-        with open(locked, encoding="utf-8") as f:
-            gl = json.load(f)
-        dst = [t["dst"].strip() for t in gl.get("terms", []) if (t.get("dst") or "").strip()
+        gl = load_runtime(locked)
+        ambiguous_ids = {cid for issue in gl.get('_issues', []) if issue['kind'] == 'ambiguous_source' for cid in issue['candidate_ids']}
+        dst = [t["dst"].strip() for t in gl.get("terms", []) if t.get('id') not in ambiguous_ids if (t.get("dst") or "").strip()
                and not t.get("keep_source")]
     return Rules(cfg, dst)
 
@@ -430,8 +432,7 @@ def rules_slice(paths: Paths, groups: list[str], locked: str | None, examples: l
     from .helpers import normalize_apostrophes
     gl = {}
     if locked and os.path.exists(locked):
-        with open(locked, encoding="utf-8") as f:
-            gl = json.load(f)
+        gl = load_runtime(locked)
     bullets = []
     for ex in examples:
         if not os.path.exists(ex):
@@ -457,7 +458,7 @@ def rules_slice(paths: Paths, groups: list[str], locked: str | None, examples: l
                if w and any(re.search(rf"(?<![a-z]){re.escape(x)}(?![a-z])", corpus) for x in w)]
         sub = filter_locked(gl, src) if gl else {}
         obj = {"group": g, "glossary": sub.get("terms", []), "characters": sub.get("characters", []),
-               "general": general, "rulings": hit}
+               "general": general, "rulings": hit, **({"glossary_issues": gl["_issues"]} if gl.get("_structured") else {})}
         op = paths.f(f"rules_{g}.json")
         write_json(op, obj)
         size = sum(len(b) for b in general + hit)
@@ -716,8 +717,7 @@ def inventory(paths: Paths, lo: int, hi: int, locked: str | None, min_count: int
     segs = {it.text_index: {"source_text": it.source_text, "translated_text": it.translated_text or ""} for it in items}
     gl = {}
     if locked and os.path.exists(locked):
-        with open(locked, encoding="utf-8") as f:
-            gl = json.load(f)
+        gl = load_runtime(locked)
     chars = gl.get("characters", [])
     names = {c["canonical"] for c in chars} | {al for c in chars for al in c.get("aliases", [])} | \
             {w for c in chars for w in c["canonical"].split()}
