@@ -62,6 +62,7 @@ def test_ambiguous_verification():
     d = sample()
     p = copy.deepcopy(person()); p['id'] = 'person.other'; p['chinese_translation'] = '另一人'
     d['persons'].append(p)
+    for row in d['persons']: row['note']='distinct identity '+row['id']
     r = check_items([dict(text_index=1, translation_status=1, source_text='Émile',translated_text='埃米尔')], gd.runtime_view(d))
     assert any(x['kind'] == 'ambiguous_source' and len(x['candidate_ids']) == 2 for x in r)
 
@@ -140,3 +141,21 @@ def test_merge_skips_recognition_aliases():
     d=sample();d['terminology'][0]['aliases']=[dict(text='principle',language='en',usage='recognition_only')]
     added,skipped=merge_newterms(d,['principle'])
     assert added==[] and skipped==['principle']
+
+
+def test_apostrophe_normalized_ambiguity_has_no_competing_targets():
+    from ainiee_translate.verify import check_items
+    d=gd.empty_document()
+    for i,text in enumerate(["O'Neil",'O’Neil']):
+        d['persons'].append(dict(id=f'person.n{i}',source_form=dict(text=text,language='en'),chinese_translation=f'姓名{i}',name_system='latin',note=f'不同身份{i}'))
+    v=gd.runtime_view(d,dict(schema_version='1.0.0',person_name_mode='A'))
+    rows=check_items([dict(text_index=1,translation_status=1,source_text="O'Neil",translated_text='姓名0')],v)
+    assert any(x['kind']=='ambiguous_source' and len(x['candidate_ids'])==2 for x in rows)
+    assert not any(x['kind']=='target_not_preserved' for x in rows)
+
+
+def test_same_preferred_source_requires_disambiguation_note():
+    d=sample();other=copy.deepcopy(d['persons'][0]);other['id']='person.other';d['persons'].append(other)
+    with pytest.raises(ValueError,match='note|辨义'): gd.validate_document(d)
+    for row in d['persons']:row['note']='distinct individual '+row['id']
+    gd.validate_document(d)

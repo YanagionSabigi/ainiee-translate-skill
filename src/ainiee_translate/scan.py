@@ -28,7 +28,7 @@ check is per-occurrence, so it also catches a name that is correct in one spot
 of a segment but transliterated in another (which verify's per-segment
 membership test misses).
 """
-from .glossary_document import load_runtime, runtime_view
+from .glossary_document import load_runtime, runtime_view, recognition_key
 
 import re
 
@@ -155,7 +155,7 @@ def find_untranslated_terms(items, locked):
             terms.append((src, dst))
     if locked.get('_structured'):
         ambiguous = {i['source'] for i in locked['_issues'] if i['kind'] == 'ambiguous_source'}
-        terms = [(src, dst) for src, dst in terms if src not in ambiguous]
+        terms = [(src, dst) for src, dst in terms if recognition_key(src) not in ambiguous]
     hits = {}
     for it in items:
         if it.get("translation_status") not in CHECKED_STATUSES:

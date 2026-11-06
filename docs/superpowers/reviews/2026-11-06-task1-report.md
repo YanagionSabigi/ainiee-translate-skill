@@ -40,3 +40,17 @@
 - 全量初跑 `local/task1-full.txt`：309 passed, 4 failed, 1 warning in 279.50s。三个产品失败来自扫描歧义保护误插入其他函数，已删除误插块；回归 `local/task1-scan-green.txt`：32 passed in 1.70s，覆盖整个 scan 回归与新增契约测试。
 - 别名候选去重补充：`local/task1-alias-red.txt` 1 failed 后修复 `_glossary_known`，上述 32 项已验证 GREEN。
 - 剩余初跑失败是 `test_progress.py::test_serve_endpoints` 的 WinError 10013，本机回环 socket 权限限制；已请求允许现有回归使用回环服务的独立复验。普通权限全量最终重跑进行中。
+
+## 独立审核修复
+
+主控独立审阅要求三项修复，`local/task1-review-red.txt` 实际观察 3 failed 后实现：
+
+- 人名/缩写歧义索引与 verify 统一使用 `recognition_key`，沿用 `latin_boundary_search` 的弯直撇号归一规则且不改变显示大小写；同一归一形式的多个稳定 ID 只报告待辨义，不同时强制多个目标。
+- 缩写工作台增加显式 `keep_source` 布尔字段，可由真实提交关闭保留原文并保存目标译名，运行输出随之更新。
+- 同集合首选源形式同形的多个身份要求每条填写非空辨义 note；普通识别别名碰撞仍可合法保留为待辨义。
+
+`local/task1-review-green.txt`：43 passed in 28.14s，包含新契约、module、新格式工作台与全部 scan 回归。
+
+此前普通权限完整重跑在审核修复后已主动停止（当时无产品失败），未作为最终证据。已允许仅本机回环运行最终整套，结果待写入。
+
+本机回环单项独立复验 `local/task1-progress-loopback.txt`：1 passed in 0.78s。

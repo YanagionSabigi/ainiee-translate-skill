@@ -66,3 +66,20 @@ def test_project_schema_validates_raw_document_before_write(tmp_path,monkeypatch
     before=locked.read_bytes();monkeypatch.setenv('AINIEE_GLOSSARY_SCHEMA',str(schema))
     with pytest.raises(ValueError):apply_glossary(project,locked,INSTRUCTION)
     assert locked.read_bytes()==before
+
+
+def test_abbreviation_can_explicitly_disable_keep_source(tmp_path):
+    d=empty_document()
+    d['abbreviations']=[dict(id='abbr.one',source_form=dict(text='ABC',language='en'),expansion=dict(text='An example',language='en'),keep_source=True)]
+    locked=tmp_path/'table.json';write_document(locked,d,dict(schema_version='1.0.0',person_name_mode='C'))
+    project=tmp_path/'review';prepare_glossary(locked,project)
+    store,binding=load_project(project);item=store.package['items'][0]
+    edits={b['id']:b['text'] for b in item['before']}
+    assert 'keep_source' in edits
+    edits.update({'keep_source':'否','target_form.text':'示例'})
+    draft=store.state()['drafts'];draft['items'][item['id']]=dict(mode='edit',touched=True,edits=edits,comment='',quotes=[])
+    store.save(draft,draft['revision']);store.submit([item['id']],store.state()['drafts']['revision'])
+    assert apply_glossary(project,locked,INSTRUCTION)['applied']==1
+    actual=read_document(locked)
+    assert runtime_view(actual)['terms'][0]['dst']=='示例'
+    assert actual['abbreviations'][0]['keep_source'] is False

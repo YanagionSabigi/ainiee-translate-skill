@@ -82,11 +82,12 @@ def main(argv=None):
 
 
 def _check_structured(items, locked):
+    from .glossary_document import recognition_key
     issues = [i for i in locked['_issues'] if i['kind'] not in ('uncategorized', 'ambiguous_source')]
     forms = {}
     for row in locked['characters'] + locked['terms']:
         for form in [row.get('canonical', row.get('src'))] + row.get('aliases', []):
-            forms.setdefault(form, {})[row['id']] = row
+            forms.setdefault(recognition_key(form), {})[row['id']] = row
     for it in items:
         if it.get('translation_status') not in CHECKED_STATUSES: continue
         src, tgt = it.get('source_text', ''), it.get('translated_text') or ''

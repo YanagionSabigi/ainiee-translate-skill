@@ -12,7 +12,7 @@ import re
 
 from jsonschema import Draft202012Validator
 from .artifact_io import write_json
-from .helpers import backup_file
+from .helpers import backup_file, normalize_apostrophes
 
 GROUPS = ('persons', 'terminology', 'abbreviations')
 
@@ -48,6 +48,13 @@ def validate_document(data):
             if parent not in categories or parent in seen:
                 raise ValueError('Invalid category parent or cycle')
             seen.add(parent); parent = categories[parent].get('parent_id')
+    for group in GROUPS:
+        preferred = {}
+        for row in data[group]:
+            preferred.setdefault(recognition_key(row['source_form']['text']), []).append(row)
+        for same in preferred.values():
+            if len(same) > 1 and any(not row.get('note', '').strip() for row in same):
+                raise ValueError('Homonymous preferred forms require a disambiguation note')
     for row in rows:
         if set(row.get('category_ids', [])) - categories.keys():
             raise ValueError('Unknown category reference')
@@ -120,6 +127,11 @@ def write_document(path, document, policy=None):
     write_json(path, data)
 
 
+def recognition_key(text):
+    """The exact normalization used by latin_boundary_search; case stays significant."""
+    return normalize_apostrophes(text)
+
+
 def recognition(row):
     forms = [row['source_form']['text']] + [a['text'] for a in row.get('aliases', [])] + [a['text'] for a in row.get('derived_forms', [])]
     if 'latin_form' in row: forms.append(row['latin_form']['text'])
@@ -178,7 +190,7 @@ def runtime_view(data, policy=None):
     forms = {}
     for r in chars + terms:
         for form in [r.get('canonical', r.get('src'))] + r['aliases']:
-            forms.setdefault(form, set()).add(r['id'])
+            forms.setdefault(recognition_key(form), set()).add(r['id'])
     for form, ids in forms.items():
         if len(ids) > 1: issues.append(dict(kind='ambiguous_source', source=form, candidate_ids=sorted(ids)))
     for g in GROUPS:
