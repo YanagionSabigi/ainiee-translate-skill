@@ -29,13 +29,13 @@
 
 **Interfaces:** `empty_document() -> dict`；`validate_document(data: dict) -> None`；`read_document(path) -> dict`；`read_policy(path, document=None) -> dict`；`write_document(path, document, policy=None) -> None`；`runtime_view(data, policy=None) -> dict`；`load_runtime(path) -> dict`。runtime_view 使用现有 characters/terms/non_translate 字段并附带 _issues 和 _structured 标识，稳定 ID 保留在视图条目。read_document 对旧表原样返回；load_runtime 对旧表不改变语义。
 
-- [ ] 先写有行为断言的失败测试，证明默认新 module 使用空新契约、四模式输出、未知体系报警、无预置分类、非法引用／树、模板互斥、政策丢失／不符及跨目录过滤不会丢政策；运行观察失败。
-- [ ] 实现上述契约、原始读写、政策文件、运行视图及必要内部辅助。默认 Schema 与可选项目 Schema 都校验原始文档。
-- [ ] 新 module create/show/list/load 接口保留旧参数，增加 name_mode/categories/category_ids；CLI 提供 --name-mode、--categories、--category。重复创建冲突报错，旧模块不转换。
-- [ ] 将 glossary CLI 的 lint/filter/merge-newterms 与消费者接通原始文档或运行视图；新格式 verify 根据源形式识别再检查目标，多义返回待辨义。
-- [ ] 写失败测试验证工作台新格式的真实提交／比较／回写、ID 绑定、其他字段保留、政策漂移冲突与模板保存；实现后验证转绿，保留旧工作台行为。
-- [ ] 使用 ../ainiee-translate-skill/.venv/Scripts/python.exe，pytest --basetemp=local/glossary-implementation --tb=short 运行新测试及相关旧回归；记录 RED/GREEN 证据，然后运行全量 pytest。
-- [ ] 独立审核任务变更，修复重大问题，保存实际测试结果并本地提交。
+- [x] 先写有行为断言的失败测试，证明默认新 module 使用空新契约、四模式输出、未知体系报警、无预置分类、非法引用／树、模板互斥、政策丢失／不符及跨目录过滤不会丢政策；运行观察失败。
+- [x] 实现上述契约、原始读写、政策文件、运行视图及必要内部辅助。默认 Schema 与可选项目 Schema 都校验原始文档。
+- [x] 新 module create/show/list/load 接口保留旧参数，增加 name_mode/categories/category_ids；CLI 提供 --name-mode、--categories、--category。重复创建冲突报错，旧模块不转换。
+- [x] 将 glossary CLI 的 lint/filter/merge-newterms 与消费者接通原始文档或运行视图；新格式 verify 根据源形式识别再检查目标，多义返回待辨义。
+- [x] 写失败测试验证工作台新格式的真实提交／比较／回写、ID 绑定、其他字段保留、政策漂移冲突与模板保存；实现后验证转绿，保留旧工作台行为。
+- [x] 使用 ../ainiee-translate-skill/.venv/Scripts/python.exe，pytest --basetemp=local/glossary-implementation --tb=short 运行新测试及相关旧回归；记录 RED/GREEN 证据，然后运行全量 pytest。
+- [x] 独立审核任务变更，修复重大问题，保存实际测试结果并本地提交。
 
 ## Task 2：文档、技能包与交付验证
 
@@ -43,10 +43,10 @@
 
 **Interfaces:** 使用 Task 1 的实际 CLI 和 Schema；文档明确字段、政策快照配套携带、四种姓名模式与生成分类的建议，不增加学科默认值。
 
-- [ ] 更新使用说明、Schema 参考与 module／术语整理入口，并清楚说明旧表不迁移。
-- [ ] 将 src 的新增／修改文件同步到技能副本，验证字节一致；不要使用会引入其他 checkout 出版工具修改的无关同步。
-- [ ] 验证打包包含两个 Schema，运行相关前端测试、全量 Python 回归、git diff --check。
-- [ ] 独立全分支复审并修复重要问题；更新设计状态、验收记录，保留本地分支交付。
+- [x] 更新使用说明、Schema 参考与 module／术语整理入口，并清楚说明旧表不迁移。
+- [x] 将 src 的新增／修改文件同步到技能副本，验证字节一致；不要使用会引入其他 checkout 出版工具修改的无关同步。
+- [x] 验证打包包含两个 Schema，运行相关前端测试、全量 Python 回归、git diff --check。
+- [x] 独立全分支复审并修复重要问题；更新设计状态、验收记录，保留本地分支交付。
 
 ## 执行记录
 

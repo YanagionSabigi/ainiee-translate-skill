@@ -1,6 +1,6 @@
 # 默认术语表与翻译 module
 
-状态：用户于 2026-11-06 接受设计并要求开始执行，实现中。设计审查记录见 [独立检查](../reviews/2026-11-06-default-glossary-design-review.md)，执行安排见[实现计划](../plans/2026-11-06-default-glossary.md)。
+状态：用户于 2026-11-06 接受设计；实现、独立代码复审和验收已完成。见[验收记录](../reviews/2026-11-06-default-glossary-verification.md)、[设计独立检查](../reviews/2026-11-06-default-glossary-design-review.md)和[实现计划](../plans/2026-11-06-default-glossary.md)。
 
 ## 需求与约束
 
@@ -149,7 +149,7 @@ module 创建／加载以及 `glossary filter --out` 都携带政策文件，并
 - [x] 写出具体设计草案。
 - [x] 独立构建者检查并解决影响实现的缺口。
 - [x] 用户确认本设计。
-- [ ] 编写实现计划，按计划实现、测试和复审。
+- [x] 编写实现计划，按计划实现、测试和复审。
 
 ## 基线验证记录
 
