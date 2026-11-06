@@ -1,5 +1,22 @@
 # Optional book templates
 
+## Bundled editable examples
+
+The skill ZIP and wheel also include independent XeLaTeX examples under
+`scripts/ainiee_translate/assets/template/tex/`: `rosepine/book`,
+`rosepine/article`, `mathtranslations/book`, and `mathtranslations/article`.
+Each directory contains editable `main.tex` and a PDF preview. Copy a complete
+example directory into your project and compile `main.tex` twice with XeLaTeX.
+The examples use the local Fandol fonts supplied by a suitable TeX installation;
+fonts and TeX itself are not bundled. Reference sources and Rosé Pine license
+are retained under `tex/reference/`.
+
+These are standalone examples for manual adaptation. The automatic exporters
+below continue to use `templates/book`; selecting an example does not change
+the exporter. `assets/template/typst/` is reserved, while the existing automatic
+Typst exporter remains available. EPUB reference examples and styles are under
+`assets/template/epub/`.
+
 Use only after the [PDF workflow](pdf_workflow.md) has produced a reviewed source
 book, completed translation cache and current independent PDF comparison records. All commands below additionally require --locked GLOSSARY --prompt PROMPT --proofreading RECORDS as described in the PDF workflow. These exporters preserve the same target
 structure used by Markdown/EPUB. They never reparse a PDF or change the cache.

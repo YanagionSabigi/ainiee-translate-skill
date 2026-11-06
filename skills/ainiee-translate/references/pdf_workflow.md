@@ -1,6 +1,6 @@
 # PDF 初翻、独立校对与 EPUB 出版
 
-PDF 的检查、MinerU 调度、源书结构与 EPUB 写包均由 pdf-to-epub 执行。开发时设置 `AINIEE_PDF_TO_EPUB` 为同级开发副本；构建的技能 bundle 和 wheel 自带逐字同步的 publication_skill。全局安装目录不因本地开发改变。
+PDF 的检查、MinerU 调度、源书结构与 EPUB 写包均由 pdf-to-epub 执行。技能 bundle 内的 publication_skill 是打包基准，wheel 使用同一副本。开发时可通过 `AINIEE_PDF_TO_EPUB` 显式选择兼容的开发副本；环境变量也影响运行时，测试打包副本时应将其清除。
 
 ## 准备与初翻
 
@@ -8,7 +8,7 @@ PDF 的检查、MinerU 调度、源书结构与 EPUB 写包均由 pdf-to-epub �
 
 ```powershell
 $env:PYTHONPATH = "<AiNiee开发副本>/src"
-$env:AINIEE_PDF_TO_EPUB = "<工作区>/development/pdf-to-epub-skill"
+# 默认使用技能内置出版组件；仅在明确选择兼容开发副本时设置 AINIEE_PDF_TO_EPUB。
 $work = "D:/译书 项目/源书"
 python -m ainiee_translate.pdf inspect "D:/原书/样书.pdf" --out $work
 # 按出版技能 references/publication.md 确认页/区域角色并保存 publication-input.json。
@@ -34,7 +34,7 @@ python -m ainiee_translate.pdf_review reconcile --book "$work/book.source.json" 
 
 ## 独立上下文对照原 PDF
 
-完成初翻不等于校对通过。导出任务让独立上下文读取原 PDF 页面/区域、当前源文、译文、相同提示词和术语表，检查漏译、误译、OCR、术语、数字、公式、结构及引用。
+审校图文时，源文中确认图号与插图对应，并使用 `after_block` 与 `placement_evidence` 固定首次提及处，避免多语言译文的图号无法自动识别。完成初翻不等于校对通过。导出任务让独立上下文读取原 PDF 页面/区域、当前源文、译文、相同提示词和术语表，检查漏译、误译、OCR、术语、数字、公式、结构及引用。
 
 ```powershell
 python -m ainiee_translate.pdf_review export --book "$work/book.source.json" --cache "D:/译书 项目/cache.json" --work $work --prompt "D:/译书 项目/prompt.md" --glossary "D:/译书 项目/glossary.locked.json" --context-id "review-session-2" --translation-context-id "translate-session-1" --output "D:/译书 项目/review-tasks.json"
@@ -54,6 +54,6 @@ python -m ainiee_translate.export --cache "D:/译书 项目/cache.json" --input 
 
 新 PDF 默认 EPUB，source 原版式输出明确不支持。MD、LaTeX、Typst 与 EPUB 使用同一当前译书及正式闸门。输出含独立译书快照、translation-manifest/1 和出版报告；源书 book.json、原审阅及状态保持不变。TeX/Typst 只使用临时渲染视图，源书仍以 epub-book/2 为准。
 
-EPUB 结构检查、正式 EPUBCheck 和实际阅读器检查分别记结果。TeX 编译检查缺字、溢出、引用、公式与新 PDF，保留源码和相对资源。工具缺失、未运行或独立校对不可用时，正式验收保持待验证。
+EPUB 结构检查、正式 EPUBCheck 和实际阅读器检查分别记结果。构建与阅读器检查后，还须按内置出版技能的 `references/validation.md` 派未参与转换的独立 subagent 对最终 EPUB 与 PDF 终校，保存绑定最终 EPUB 哈希的报告；翻译对照校对不能自动替代这一出版终校。未完成时仅可交付标注待校对的草稿。TeX 编译检查缺字、溢出、引用、公式与新 PDF，保留源码和相对资源。工具缺失、未运行或独立校对不可用时，正式验收保持待验证。
 
 旧 PDF 缓存保留在历史中，从原 PDF 建新项目；外部 AiNiee 回退只服务非 PDF Office。原生 EPUB/TXT 等原流程继续使用。

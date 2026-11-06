@@ -8,7 +8,7 @@
 
 本项目依赖并继承两个上游项目的成果：[AiNiee](https://github.com/NEKOparapa/AiNiee) 提供基础文件读写、缓存结构及翻译规则，[AiNiee-skill（ainiee-translate-skill）](https://github.com/xuanji86/ainiee-translate-skill) 提供 Agent 翻译技能、提示词与术语表管理、批次工作流和插件基础。本项目在此基础上扩展 PDF 出版与阅读校对；基础运行所需的相关代码和技能文件已随本项目包含，无需为 EPUB / TXT 另外安装上述两个上游项目。
 
-> 当前版本：`v2.2.0`，同步校对工作台 0.3.0，新增术语信息与派生类批量审核，保留微信读书反馈校对。核对日期：2026-11-01。
+> 当前版本：`v2.3.0`，新增通用术语表、四种人名模式及 module 政策快照，附带 Rosé Pine／数译风格的 book、article TeX 模板和 PDF 预览。核对日期：2026-11-06。
 
 ## 可以做什么
 

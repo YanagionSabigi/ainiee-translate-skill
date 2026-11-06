@@ -7,10 +7,39 @@ import math, posixpath, re, shutil, tempfile, uuid, zipfile
 from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
 from pdf_to_epub import SKILL, load, save, sha, digest, run, pdf_module, rect_check, valid_id
-from epub_publication import apply_publication
+from epub_publication import apply_publication, number_notes_in_reading_order
+from epub_chemistry import format_chemical_text
+from epub_figures import plan_figure_layout
+from epub_navigation import make_ncx
 
 X='http://www.w3.org/1999/xhtml'; EPUB='http://www.idpf.org/2007/ops'
 OPF='http://www.idpf.org/2007/opf'; DC='http://purl.org/dc/elements/1.1/'
+
+def introduced_quote_ids(blocks):
+    """Select only the adjacent paragraph after a Chinese quotation lead-in.
+
+    Ignore note labels and consume a lead-in once. Other block types and
+    container boundaries stop inference; extracted text stays unchanged.
+    """
+    selected=set(); pending=False
+    for block in blocks:
+        if block['kind']!='paragraph':
+            pending=False
+            continue
+        if pending:
+            selected.add(block['id']); pending=False
+            continue
+        text=''.join(item.get('text','') for item in block.get('inline',[]) if 'note' not in item)
+        text=re.sub(r'\s+','',text)
+        # These discourse markers introduce the author's own explanation.
+        if re.search(r'(?:也就是说|换句话说|可以说|比如说|例如说|一般来说|总的来说|严格地说|应该说)[：:]$',text):
+            continue
+        # Keep attributed forms such as "孔子这样说：" eligible.
+        if re.search(r'(?:^|[。！？!?；;：:，,])(?:这么说|这样说)[：:]$',text):
+            continue
+        pending=bool(re.search(r'[^。！？!?；;：:]+(?:说|说道|写道|指出|论述道|记载道)[：:]$',text))
+    return selected
+
 def element(tag,parent=None,text=None,**attrs):
     e=ET.Element('{'+X+'}'+tag,attrs) if parent is None else ET.SubElement(parent,'{'+X+'}'+tag,attrs)
     if text is not None: e.text=str(text)
@@ -125,7 +154,7 @@ def build(args):
         manifest=load(manifest_path)
         validate_translation_binding(book,manifest,work)
         book=compile_relationships(book,manifest,work)
-    elif book.get('schema') != 'epub-book/1':
+    elif book.get('schema') == 'epub-book/2':
         raise ValueError('epub-book/2 requires explicit translated book and manifest')
     if output==Path(state['source_path']).resolve() or output.suffix.lower()!='.epub': raise ValueError('Output must be a separate .epub file')
     if sha(state['source_path'])!=book['source_sha256']: raise ValueError('Source PDF changed')
@@ -136,9 +165,23 @@ def build(args):
     language=book['metadata']['language']
     if language=='und' and book.get('reviewed'): raise ValueError('Reviewed book needs original language metadata')
     issues=list(book.get('issues') or []); output.parent.mkdir(parents=True,exist_ok=True)
+    number_notes_in_reading_order(book)
+    figure_placements=[]
+    for group in book['chapters']+book['notes']:
+        ordered,placements=plan_figure_layout(group['blocks'])
+        group['blocks']=ordered
+        figure_placements.extend(dict(item,container=group['id']) for item in placements)
+    number_notes_in_reading_order(book)
     with tempfile.TemporaryDirectory(prefix='epub-',dir=work) as tmp:
         stage=Path(tmp)/'EPUB'; stage.mkdir(); shutil.copyfile(SKILL/'assets/book.css',stage/'book.css')
         assets=materialize_assets(book,work,stage,issues,args.formula_renderer)
+        quote_ids=set()
+        figure_captions=defaultdict(list)
+        for group in book['chapters']+book['notes']:
+            quote_ids.update(introduced_quote_ids([b for b in group['blocks']
+                                                   if b['kind']!='figure' and not b.get('caption_for')]))
+            for b in group['blocks']:
+                if b.get('caption_for'): figure_captions[b['caption_for']].append(b)
         files={c['id']:c['id']+'.xhtml' for c in book['chapters']}; notes={n['id']:n for n in book['notes']}; refs=defaultdict(list); all_ids=set(); blocks={}
         for c in book['chapters']:
             blocks[c['id']]=c['id']
@@ -186,11 +229,20 @@ def build(args):
                     element('a',parent,item['text'],href=files[blocks[target]]+'#'+target)
                 else:
                     p=parent
+                    text=item.get('text','')
+                    if 'chemistry' in item and type(item['chemistry']) is not bool:
+                        raise ValueError('Chemical chemistry flag must be boolean')
+                    if item.get('chemistry'):
+                        if not isinstance(item.get('evidence'),str) or not item['evidence'].strip():
+                            raise ValueError('Chemical chemistry text needs source evidence')
+                        text=format_chemical_text(text)
+                        p=element('span',p,**{'class':'chemistry'})
                     for style in item.get('styles',[]):
                         tag={'bold':'strong','italic':'em','sup':'sup','sub':'sub'}.get(style,'span'); p=element(tag,p,**({'class':style} if tag=='span' else {}))
-                    add_text(p,item.get('text',''))
+                    add_text(p,text)
         def render(b,parent,current):
             kind=b['kind']; bid=b['id']; claim(bid)
+            if bid in quote_ids: kind='quote'
             if kind in {'figure','formula','table-image'}:
                 spec=b['asset']; el=element('div' if kind=='formula' else 'figure',parent,id=bid,**{'class':'formula' if kind=='formula' else 'figure'})
                 attrs={}
@@ -201,8 +253,10 @@ def build(args):
                     attrs['style']=f'width:{width:g}em;max-width:100%'
                 element('img',el,src=assets[spec['id']]['href'],alt=spec.get('alt',''),**attrs)
                 if b.get('equation_label') and not spec.get('includes_label'): element('span',el,b['equation_label'],**{'class':'equation-label'})
-                if b.get('inline'):
-                    inline(element('p' if kind=='formula' else 'figcaption',el,**{'class':'caption'}),b['inline'],current)
+                if b.get('inline') or figure_captions.get(bid):
+                    caption=element('p' if kind=='formula' else 'figcaption',el,**{'class':'caption'})
+                    if b.get('inline'): inline(caption,b['inline'],current)
+                    for caption_block in figure_captions.get(bid,[]): render(caption_block,caption,current)
                 return
             if kind=='table':
                 if not b.get('table_evidence'): raise ValueError('Semantic table needs source cell evidence')
@@ -248,6 +302,7 @@ def build(args):
         for c in book['chapters']:
             claim(c['id']); root,body=xhtml(c['title'],language); body.set('class','chapter'); body.set('{'+EPUB+'}type','bodymatter'); element('h1',body,c['title'],id=c['id']); sections=[]
             for b in c['blocks']:
+                if b.get('caption_for'): continue
                 if publication and publication['toc']['placement']=={'chapter':c['id'],'before_block':b['id']}:
                     claim('publication-contents'); visible_toc(body,toc)
                 render(b,body,c['id'])
@@ -261,14 +316,17 @@ def build(args):
                 section=element('section',roots[c['id']][1],role='doc-endnotes',**{'class':'notes'}); section.set('{'+EPUB+'}type','endnotes'); element('h2',section,book['labels']['notes'])
                 for n in selected:
                     claim(n['id']); note=element('aside',section,id=n['id'],role='note',**{'class':'note'}); note.set('{'+EPUB+'}type','endnote'); element('p',note,n['label'],**{'class':'no-indent'})
-                    for b in n['blocks']: render(b,note,c['id'])
+                    for b in n['blocks']:
+                        if not b.get('caption_for'): render(b,note,c['id'])
                     note_nodes[n['id']]=note
         # A later note, including one in another chapter, can cite an earlier note.
         # Resolve returns only after every note body has contributed its references.
         for n in book['notes']:
             note=note_nodes[n['id']]; links=refs.get(n['id'],[])
             if not links: issues.append(f'Note {n["id"]} lacks a verified reference; retained as readable endnote.')
-            for i,(file,rid) in enumerate(links,1): element('a',note,book['labels']['return']+(f' {i}' if len(links)>1 else ''),href=file+'#'+rid,role='doc-backlink',**{'class':'backlink'})
+            for i,(file,rid) in enumerate(links,1):
+                label=book['labels']['return'] if book.get('schema')=='epub-book/2' else '返回原文'
+                element('a',note,label,href=file+'#'+rid,role='doc-backlink',**{'class':'backlink'})
         for target,returns in relation_returns.items():
             owner=roots[blocks[target]][0]
             node=next((n for n in owner.iter() if n.get('id')==target),None)
@@ -316,15 +374,16 @@ def build(args):
             if v: ET.SubElement(meta,'{'+DC+'}'+k).text=v
         ET.SubElement(meta,'{'+OPF+'}meta',{'property':'dcterms:modified'}).text=datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
         ET.SubElement(meta,'{'+OPF+'}meta',{'property':'rendition:layout'}).text='reflowable'
+        (stage/'toc.ncx').write_bytes(make_ncx(navroot,identifier,book['metadata']['title'],language))
         manifest=ET.SubElement(package,'{'+OPF+'}manifest'); itemids={}
         for i,p in enumerate(sorted(p for p in stage.rglob('*') if p.is_file())):
             href=p.relative_to(stage).as_posix(); iid=f'item{i}'; itemids[href]=iid
-            media={'.xhtml':'application/xhtml+xml','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg'}[p.suffix]
+            media={'.xhtml':'application/xhtml+xml','.ncx':'application/x-dtbncx+xml','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg'}[p.suffix]
             attrs={'id':iid,'href':href,'media-type':media}
             if href=='nav.xhtml': attrs['properties']='nav'
             if href==cover_href: attrs['properties']='cover-image'
             ET.SubElement(manifest,'{'+OPF+'}item',attrs)
-        spine=ET.SubElement(package,'{'+OPF+'}spine'); reading_order=list(front_files)
+        spine=ET.SubElement(package,'{'+OPF+'}spine',{'toc':itemids['toc.ncx']}); reading_order=list(front_files)
         if not publication: reading_order.append('contents.xhtml')
         for c in book['chapters']:
             if publication and publication['toc']['placement']=={'before':c['id']}: reading_order.append('contents.xhtml')
@@ -346,8 +405,11 @@ def build(args):
             'reviewed':book['reviewed'],'selected_pages':book['selected_pages'],'extraction':book['extraction'],'structure_rules':book['structure_rules'],
             'chapter_count':len(book['chapters']),'note_mapping':[{k:n.get(k) for k in ['id','label','original_label','chapter','association_evidence']} for n in book['notes']],
             'assets':assets,'publication':publication,'reading_order':reading_order,'issues':issues,'omissions':book['omissions'],'review_evidence':book['review_evidence'],'checks':checks,
+            'introduced_quote_blocks':sorted(quote_ids),
+            'figure_placements':figure_placements,
             'epubcheck':'Not run by build; use check --epubcheck JAR.','reader_validation':'Not performed by build; record actual reader/version.',
-            'style_limits':['OCR has no reliable font/style information; recovered styles need visual evidence.','Dot emphasis falls back to underline; chapter breaks depend on reader.']}
+            'style_limits':['OCR has no reliable font/style information; recovered styles need visual evidence.','Dot emphasis falls back to underline; chapter breaks depend on reader.',
+                            'Quotes use light green, 0.9em and FangSong; the font falls back to serif when unavailable. Reader overrides may change presentation.']}
     report['corrections']=[{'block':b['id'],'edits':b.get('edits',[]),'evidence':[i.get('evidence') for i in b.get('inline',[]) if i.get('evidence')]} for group in book['chapters']+book['notes'] for b in group['blocks'] if b.get('edits') or any(i.get('evidence') for i in b.get('inline',[]))]
     report_dir.mkdir(parents=True,exist_ok=True)
     save(report_dir/'conversion-report.json',report)

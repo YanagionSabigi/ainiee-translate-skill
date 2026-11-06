@@ -1,4 +1,4 @@
-"""Include the unchanged sibling publisher in a standalone wheel."""
+"""Include the bundled publisher in a standalone wheel."""
 from pathlib import Path
 import importlib.util
 import shutil

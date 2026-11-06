@@ -215,7 +215,7 @@ def draft(args):
                 else: groups.append([l])
             for group in groups: blocks.append({'id':f'b{len(blocks)+1:04d}','kind':'paragraph','sources':[l['id'] for l in group],'joins':[' ']*(len(group)-1)})
     plan={'schema':'pdf-review/1','raw_sha256':sha(work/'raw.json'),'source_sha256':raw['source_sha256'],'reviewed':False,'review_evidence':[],
-          'metadata':{'title':Path(raw['source_name']).stem,'language':'und','creator':''},'labels':{'notes':'Notes','contents':'Contents','return':'Return'},
+          'metadata':{'title':Path(raw['source_name']).stem,'language':'und','creator':''},'labels':{'notes':'Notes','contents':'Contents','return':'返回原文'},
           'chapters':[{'id':'document','title':Path(raw['source_name']).stem,'heading_sources':[],'blocks':blocks}],
           'notes':[],'omissions':[],'region_resolutions':[],'issues':['Unreviewed draft: verify order, paragraphs, headings, notes, assets and language.'],
           'structure_rules':{'fragment':True,'parts_mapping':'No inferred chapters','printed_page_offset':None}}
@@ -244,9 +244,19 @@ def resolve_inline(items,idx,sources):
     result=[]
     for item in items:
         if not isinstance(item,dict): raise ValueError('Inline items must be objects')
+        if 'chemistry' in item and type(item['chemistry']) is not bool: raise ValueError('Chemical chemistry flag must be boolean')
+        if item.get('chemistry') and (not isinstance(item.get('evidence'),str) or not item['evidence'].strip()):
+            raise ValueError('Chemical chemistry annotation needs source evidence')
         if 'line' in item:
             if item['line'] not in sources: raise ValueError('Inline source must be listed in block sources')
-            result.extend(slice_spans(idx[item['line']],item.get('start',0),item.get('end')))
+            spans=slice_spans(idx[item['line']],item.get('start',0),item.get('end'))
+            if item.get('chemistry'):
+                styles=spans[0].get('styles',[]) if spans else []
+                if any(span.get('styles',[])!=styles for span in spans):
+                    raise ValueError('Chemical source crosses styles; supply source-reviewed inline chemical text')
+                result.append({'text':''.join(span['text'] for span in spans),'styles':styles,
+                               'chemistry':True,'evidence':item['evidence']})
+            else: result.extend(spans)
         elif 'text' in item:
             if not item.get('evidence'): raise ValueError('Literal text/correction needs source evidence')
             result.append(item)
@@ -279,7 +289,14 @@ def resolve_block(block,idx,used):
         old,new=edit['old'],edit['new']; text=''.join(i.get('text','') for i in inline)
         if text.count(old)!=1 or any('text' not in i for i in inline): raise ValueError('Edits require one text match; use source slices around links/assets')
         if any(i.get('styles') for i in inline) and 'style_resolution' not in edit: raise ValueError('Styled edit needs style_resolution or inline slices')
-        inline=[{'text':text.replace(old,new,1),'styles':edit.get('style_resolution',[])}]
+        chemical_flags={bool(item.get('chemistry')) for item in inline if item.get('text','').strip()}
+        if chemical_flags=={True,False}:
+            raise ValueError('Edit crosses chemistry boundaries; supply corrected source-reviewed inline slices')
+        replacement={'text':text.replace(old,new,1),'styles':edit.get('style_resolution',[])}
+        if chemical_flags=={True}:
+            replacement.update(chemistry=True,evidence='; '.join(dict.fromkeys(
+                [item['evidence'] for item in inline if item.get('chemistry')]+[edit['evidence']])))
+        inline=[replacement]
     if b.get('styles'):
         if not b.get('style_evidence'): raise ValueError('Restored styles need visual evidence')
         for item in inline:

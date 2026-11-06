@@ -14,6 +14,7 @@ def skill_root() -> Path:
     else:
         module = Path(__file__).resolve()
         candidates = [module.parent / 'publication_skill']
+        candidates += [parent / 'skills/ainiee-translate/scripts/ainiee_translate/publication_skill' for parent in module.parents]
         candidates += [parent / 'pdf-to-epub-skill' for parent in module.parents]
     for root in candidates:
         if (root / 'scripts/pdf_to_epub.py').is_file():
