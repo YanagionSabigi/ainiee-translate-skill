@@ -48,7 +48,9 @@ def _structured_fields(group, row):
     elif group in ('terminology', 'abbreviations'):
         keys = ['target_template'] if 'target_template' in row else ['target_form.text']
     else: return _fields(group, row)
-    return [dict(key=k, kind='str') for k in keys + ['note']]
+    fields = [dict(key=k, kind='str') for k in keys + ['note']]
+    if group == 'abbreviations': fields.append(dict(key='keep_source', kind='bool'))
+    return fields
 
 
 def _fields(group, row):

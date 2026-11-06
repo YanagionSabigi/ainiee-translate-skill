@@ -14,7 +14,7 @@
 <PFX> -m ainiee_translate.module load <名字> --work <项目目录>
 ```
 
-如已有自己的分类文件，可创建时传 `--categories <JSON>`，并用重复的 `--category <ID>` 选择范围。默认选择全部领域；父节点包含后代，未分类条目和公共缩写仍保留，引用递归补齐。分类文件的具体包装格式以 `module create --help` 为准。
+如已有自己的分类文件，可创建时传 `--categories <JSON>`，内容采用分类数组或 `{"categories": [...]}`，并用重复的 `--category <ID>` 选择范围。默认选择全部领域；父节点包含后代，未分类条目和公共缩写仍保留，引用递归补齐。
 
 ## 字段
 
