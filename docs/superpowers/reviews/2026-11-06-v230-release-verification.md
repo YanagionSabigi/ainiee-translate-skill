@@ -13,3 +13,13 @@
 资源：`dist/ainiee-translate-v2.3.0.zip`、`dist/ainiee_translate-2.3.0-py3-none-any.whl`、`dist/release-manifest.json`、`dist/SHA256SUMS`，四者随 GitHub Release 发布。完整日志、导入哈希、PDF 渲染及本机安装备份保存在工作区忽略的 `local/`。
 
 这些新模板是独立可编辑素材，不声称已替换自动导出器；原自动 LaTeX／Typst 路径继续保留。字体与编译器不捆绑发布。
+
+## 发布与本机安装结果
+
+已合并 main 并推送用户 fork，同时同步已有 release 更新入口。`v2.3.0` 标签指向合并提交 `63c1835da097e0c9e372f99e4b1bcaf0d7781c07`；发布时远端 main、release 和标签的目标一致。随后仅补记本节及计划状态，不改发布代码或技能资产。
+
+正式 Release：[v2.3.0](https://github.com/YanagionSabigi/ainiee-translate-skill/releases/tag/v2.3.0)，非草稿、非预发行。四个资产下载回读后与本地核验文件逐字节一致。
+
+本机 Codex 的 AiNiee-translate 技能已用最终 ZIP 更新到 2.3.0，308 个文件与发布 manifest 的 SHA-256 一致。旧技能完整移至本工作区 `local/skill-backups/`，没有删除。实际安装目录的 module 创建／加载、默认 D 空分类和内置出版组件定位冒烟通过；执行回执在 `local/v230-installed-receipt.json`。
+
+没有创建 PR，没有向 upstream 推送；原 template checkout 的文件和暂存状态仍保留。
