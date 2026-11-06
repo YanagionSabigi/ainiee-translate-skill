@@ -166,6 +166,8 @@ v1.4.1 及更早版本的 epub 解析用 `soup.get_text(strip=True)` 抽文本�
 
 ## 步骤 3：构建并锁定词汇表
 
+创建 module、整理新格式词表、切换人名模式或过滤子表前，先读[默认术语表契约](references/glossary_schema.md)。新建表采用人名／术语／缩写通用 Schema；建议按当前文献提前生成并核对领域分类，工具不预置分类，空分类合法。旧 profile 和旧 module 不自动迁移。
+
 项目提供 `术语表.md`、`schemas/glossary.locked.schema.json` 时，先按该 Schema 生成并验证 locked JSON，成功后才加载/翻译；通过 `AINIEE_GLOSSARY_SCHEMA` 启用项目级加载校验。读取并应用项目 `style.md`。个人 Schema 与风格只约束对应项目，操作见 [PDF 工作流](references/pdf_workflow.md#translate-polish-and-verify)。
 
 从 AiNiee 公共术语表（`prompt_dictionary_data`）和可选的项目分析缓存（`analysis_v1`）生成锁定表：
@@ -208,11 +210,11 @@ v1.4.1 及更早版本的 epub 解析用 `soup.get_text(strip=True)` 抽文本�
 「模块」= 一个可复用的任务设置包，存于 `~/.ainiee-translate/modules/<名字>/`，含：翻译提示词、润色提示词、词汇表、禁翻表、风格/世界观/角色、源/目标语言。同一个技能/插件靠切换模块应对不同小说/文档。
 
 - 导入 AiNiee profile 为模块：`<PFX> -m ainiee_translate.profile import --profile <profile.json> --name <名字>`
-- 新建空模块：`<PFX> -m ainiee_translate.module create <名字> [--source-language X --target-language Y]`
+- 新建空模块：`<PFX> -m ainiee_translate.module create <名字> [--source-language X --target-language Y --name-mode A|B|C|D]`（默认 D，分类与词条为空）
 - 列出/查看：`<PFX> -m ainiee_translate.module list` / `show <名字>`
 - 加载进项目：`<PFX> -m ainiee_translate.module load <名字> --work ~/my-project`
 
-加载只是把模块的 `translate_prompt.md`→`work/user_prompt.md`、`polish_prompt.md`、`glossary.locked.json` 拷进项目 `work/`——即后续步骤本就在读的文件。**不用模块的项目，流程与下文完全一致。** 此外 `prompt.py` 还能从 AiNiee 配置/profile 提取所选系统提示词（`--translate-system`）与润色提示词（`--polish`）。命令行入口见附录 C。
+加载把模块的 `translate_prompt.md`→`work/user_prompt.md`、`polish_prompt.md`、`glossary.locked.json` 拷进项目 `work/`；新格式同时携带哈希绑定的 `glossary.locked.policy.json`，固定当前姓名模式和分类选择。移动词表必须带配套政策，不能手改后忽略哈希；缺失或不符应报错。**不用模块的项目，流程与下文完全一致。** 此外 `prompt.py` 还能从 AiNiee 配置/profile 提取所选系统提示词（`--translate-system`）与润色提示词（`--polish`）。命令行入口见附录 C。
 
 ---
 
@@ -273,7 +275,7 @@ v1.4.1 及更早版本的 epub 解析用 `soup.get_text(strip=True)` 抽文本�
 
 1. **通用规则**见 `references/translation_rules.md`（AiNiee 原生：逐行对应、保留标记、忠实准确）。
 2. **项目规则**（人名保留、头衔摆放、风格等）见用户自定义提示词（步骤 3+，由用户自己写，不写死在技能里）。
-3. **人名/术语** 以锁定表（术语表/角色表）为唯一真相源；`render` 为英文则保留原文。
+3. **人名/术语** 以锁定表及任务政策为准。新表按 A 汉化／B 拉丁转写／C 源语言／D 姓名体系处理（默认），资料不足保留源文并列待核实；先读[默认术语表契约](references/glossary_schema.md)。旧表 `render` 为英文则保留原文。
 4. 遇到锁定表外的新实体：模式 A/B 停下询问用户；模式 C 用锁定表最近匹配或保留原文，并记入待审列表。
 
 将翻译结果写成 JSON 文件：

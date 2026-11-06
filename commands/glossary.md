@@ -5,6 +5,8 @@ allowed-tools: Bash, Read, Edit
 ---
 构建锁定词汇表到当前项目 `work/`。
 
+新建 module 使用[通用术语表契约](../skills/ainiee-translate/references/glossary_schema.md)。建议整理前按当前文献提前生成并核对领域分类；工具不预置学科分类，也不要求先分类才允许建表。以下 `--config` 路径沿用旧 AiNiee 表格式，不会把历史资料自动迁移。
+
 ```bash
 PYTHONPATH="${CLAUDE_PLUGIN_ROOT}/skills/ainiee-translate/scripts" \
 "${AINIEE_PY:?}" -m ainiee_translate.glossary $ARGUMENTS --out work/glossary.locked.json
