@@ -32,7 +32,7 @@
 
 ## 最终验证
 
-等待完整测试结束后填入实际结果。独立全分支审核由主控负责。
+最终通过结果见文末。独立全分支审核由主控负责。
 
 ## 最新验证补充
 
@@ -51,6 +51,14 @@
 
 `local/task1-review-green.txt`：43 passed in 28.14s，包含新契约、module、新格式工作台与全部 scan 回归。
 
-此前普通权限完整重跑在审核修复后已主动停止（当时无产品失败），未作为最终证据。已允许仅本机回环运行最终整套，结果待写入。
+此前普通权限完整重跑在审核修复后已主动停止（当时无产品失败），未作为最终证据。已允许仅本机回环运行最终整套，结果见最终验证。
 
 本机回环单项独立复验 `local/task1-progress-loopback.txt`：1 passed in 0.78s。
+
+
+## 最终验证结果
+
+- 完整回归：`../ainiee-translate-skill/.venv/Scripts/python.exe -m pytest --basetemp=local/glossary-full-reviewed --tb=short`，**329 passed in 230.46s (0:03:50)**，退出码 0；日志 `local/task1-full-reviewed.txt`。执行许可仅用于现有本机回环进度服务测试，不访问外部网络。
+- `git diff --check` 对本任务源码、测试与报告通过，退出码 0。
+- 实现提交：`a6aed4e`；独立审核问题修复：`1f74bd6`。
+- 产品失败均已修复并完成完整绿色回归。本任务没有已知未解决的重要问题；技能副本同步、交付打包和最终全分支审阅由主控统一负责。
