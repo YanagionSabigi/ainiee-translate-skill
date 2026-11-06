@@ -362,18 +362,18 @@ v1.4.1 及更早版本的 epub 解析用 `soup.get_text(strip=True)` 抽文本�
   "$WORK/work/glossary.locked.json"
 ```
 
-输出 JSON 格式的问题列表，并打印问题总数。两类检测：
+输出 JSON 格式的问题列表，并打印问题总数。基础检测：
 
 - `empty_translation`：源段有内容但译文为空（漏译）。
-- `name_not_preserved`：源段含锁定表英文人名但译文中该名消失（人名汉化）。
+- 旧格式 `name_not_preserved`：源段含锁定表要求原样保留的人名，但译文中该名消失。新格式按源形式识别人名，再核对所选 A/B/C/D 模式的目标姓名；汉化本身不构成错误。
 
-verify 检查**已译（status 1）和已润色（status 2）**两类段（润色文本就存在 `translated_text`）。对每个问题，使用 `batch write`（已译段）/ `polish write`（已润色段，保住状态）修正对应 `text_index` 的译文后重新跑 verify，直到无问题。
+verify 检查**已译（status 1）和已润色（status 2）**两类段（润色文本就存在 `translated_text`）。明确的漏译或政策不符，使用 `batch write`（已译段）/ `polish write`（已润色段，保住状态）修正后重查。新格式的姓名表示缺失、未知体系和同形多义须保留为待核实／待辨义；不能猜造译名或修改正确译文来清零问题。
 
 ### ⚠️ verify 的局限：为什么「verify 干净」≠「没有翻译错误」
 
 verify 是**词汇表执行器**，不是**发现器**。它只能发现「锁定表里登记过的人名」消失的情况，因此天然漏掉下面这些（实战中绝大多数漏网错误都属于此）：
 
-1. **词汇表覆盖不全（头号原因）**：verify 只查 `glossary.locked.json` 的 `characters`。**没进表的名字它根本不知道要查**——配角、地名、舰名，尤其当词汇表是从「上一本书」或 AiNiee 分析缓存里种出来、没针对当前书补全时。一份「2 个问题」的干净报告，往往只是因为表里恰好只有 2 个相关名字。→ **对策：词汇表必须随当前书补全**（见下方 `scan` 发现流程）。
+1. **词汇表覆盖不全（头号原因）**：verify 只知道表内姓名（新表 `persons`，旧表 `characters`）。**没进表的名字它根本不知道要查**——配角、地名、舰名，尤其当词汇表是从「上一本书」或 AiNiee 分析缓存里种出来、没针对当前书补全时。一份「2 个问题」的干净报告，往往只是因为表里恰好只有 2 个相关名字。→ **对策：词汇表必须随当前书补全**（见下方 `scan` 发现流程）。以下英文保留的例子主要描述旧表；新表须以当前姓名模式为准。
 2. **整段成员检查，漏「同段对错并存」**：若同一段里某名字一处保留英文、另一处被音译（例：`Keru 看着…后来克鲁离开`），verify 看到「Keru 在」就不报。
 3. **「全程音译」的名字无信号**：若某名字在**全书每一处**都被音译（例 `Tenmei→天明`、`Rianu→里亚努`），它从没以英文出现过，"时而对时而错"的不一致信号为零。
 4. **区分不了「音译错误」与「合理代词省略 / 合法意译」**：补全词汇表后，那些把名字合理处理成「他/她」的段会被误报；`Vulcan→瓦肯` 这种合法意译它也无法识别。
@@ -406,7 +406,7 @@ verify 是**词汇表执行器**，不是**发现器**。它只能发现「锁�
 `audit` 与 `batch write` 闸门用同一套检查，所以正常写入的项目 `empty`/`tag_mismatch` 应为 0；警告类按段号抽查。
 `glossary lint` 的 `alias_has_title`（如 `Admiral Janeway`）会让 verify 在头衔被翻译的每一处都误报，`alias_collides`（`Paris` 同时挂在 Owen Paris 与 Tom Paris 下）说明清洗时把两个人并了——改表再 verify。
 
-**推荐校对闭环**：`verify`（清掉表内硬伤）→ `audit`（机械硬伤与风格）→ `glossary lint`（表结构）→ `scan --mode all`（`discover`→`inconsistent` 全改、`never_preserved` 挑真名；`terms`→补回被漏成英文的术语；`strays`→揪幻觉错名；`merges`→收粘连词）→ **把确认的真名/地名补进 `glossary.locked.json` 的 `characters`，保留英文的通名补进 `terms`（`keep_source:true`），有中文译名的术语进 `terms`（带 `dst`）** → 再 `verify`（这下表全了，能守住；忽略代词省略类误报）。改已润色段一律用 `polish write` 以保住状态。
+**推荐校对闭环**：`verify` → `audit` → `glossary lint` → `scan --mode all`，根据上下文修正明确问题，补充确认的词条后再核验。新格式修改正式表的 `persons/terminology/abbreviations`，保留稳定 ID、语言、引用和政策；不得把运行视图的 `characters/terms` 写回新表。旧格式才向 `characters` 补姓名、向 `terms` 补带 `dst` 或明确 `keep_source:true` 的术语。资料不足和歧义继续列待核实，不为清零猜译名；同段正确姓名与错误写法并存仍需语义检查。改已润色段一律用 `polish write` 保住状态。
 
 > 经验：写自查脚本做名字比对时，先归一化撇号（弯/直撇号 `'`/`'` 统一），否则 `Mak'ala`、`Quark's`、`O'Brien` 会因撇号不同被误判为「消失」。verify/scan 内部已统一处理。
 
