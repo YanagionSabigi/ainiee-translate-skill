@@ -27,8 +27,10 @@ GLOSSARY_SCHEMA = {
 def load_review_config(prompt_path, glossary_path, *, glossary_schema_path=None):
     from jsonschema import Draft202012Validator
     try:
-        locked = json.loads(Path(glossary_path).read_text(encoding='utf8'))
-        Draft202012Validator(GLOSSARY_SCHEMA).validate(locked)
+        from .glossary_document import read_document, load_runtime, structured
+        locked = read_document(glossary_path)
+        if not structured(locked):
+            Draft202012Validator(GLOSSARY_SCHEMA).validate(locked)
         if glossary_schema_path:
             schema = json.loads(Path(glossary_schema_path).read_text(encoding='utf8'))
             Draft202012Validator.check_schema(schema)
@@ -39,7 +41,7 @@ def load_review_config(prompt_path, glossary_path, *, glossary_schema_path=None)
     if not prompt.strip():
         raise ValueError('Translation prompt cannot be empty')
     return {'prompt_sha256': sha256(prompt_path), 'glossary_sha256': sha256(glossary_path),
-            'prompt': prompt, 'glossary': locked}
+            'prompt': prompt, 'glossary': load_runtime(glossary_path)}
 
 
 def _pdf_path(book, work, explicit=None):

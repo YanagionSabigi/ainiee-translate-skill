@@ -9,6 +9,8 @@ differently.
 
     precedents cache.json --for work/par/grp_*_src.json --locked work/glossary.locked.json --out work/BOOK_BIBLE.md
 """
+from .glossary_document import load_runtime, runtime_view
+
 import argparse
 import collections
 import json
@@ -22,6 +24,7 @@ _AFTER_STOP = {"说", "的", "和", "与", "在", "道", "了", "是"}
 
 
 def _glossary_index(locked):
+    locked = runtime_view(locked or {})
     gl = {}
     for c in (locked or {}).get("characters", []):
         for n in [c.get("canonical"), c.get("render")] + list(c.get("aliases") or []):
@@ -31,6 +34,10 @@ def _glossary_index(locked):
         if t.get("src"):
             dst = f"{t['src']}（保留原文）" if t.get("keep_source") else t.get("dst", "")
             gl[N(t["src"]).lower()] = ("术语", dst, t.get("note", ""))
+    if locked.get('_structured'):
+        for issue in locked['_issues']:
+            if issue['kind'] == 'ambiguous_source':
+                gl[N(issue['source']).lower()] = ('待辨义', ', '.join(issue['candidate_ids']), '按上下文核实')
     return gl
 
 
@@ -83,6 +90,10 @@ def build(items, pending_texts, locked=None, title="BOOK_BIBLE") -> str:
                 rank[m.group(0)] += 1
         lines += ["", "## 姓名 + 衔级/称谓 既有写法（频次 ≥3，直接照抄）", "",
                   ", ".join(f"{k}×{v}" for k, v in rank.most_common() if v >= 3) or "（无）"]
+    view = runtime_view(locked or {})
+    if view.get('_structured'):
+        lines += ['', '## 词表待核实问题', '']
+        lines += [json.dumps(issue, ensure_ascii=False) for issue in view['_issues'] if issue['kind'] != 'uncategorized']
     return "\n".join(lines) + "\n"
 
 
@@ -105,8 +116,7 @@ def main(argv=None):
             texts.extend(r.get("source_text", "") for r in json.load(f))
     locked = None
     if a.locked:
-        with open(a.locked, encoding="utf-8") as f:
-            locked = json.load(f)
+        locked = load_runtime(a.locked)
     md = build(items, texts, locked, a.title)
     if a.out:
         with open(a.out, "w", encoding="utf-8") as f:
