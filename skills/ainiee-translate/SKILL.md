@@ -26,6 +26,8 @@ parse → 构建锁定词汇表 → 逐章翻译（agent 按规则） → 写回
 
 ---
 
+使用、制作或修改 LaTeX 模板时，必须先读取并遵循 [LaTeX 写作规则](rule/LaTeX 写作规则.md)，包括后端代码、标点、空格和数学排版规范。
+
 ## 前置依赖与安装（重要）
 
 `parse`/`export` 的轻量格式随技能打包在 `scripts/ainiee_translate/_vendor/` 下（改写自 AiNiee、剥离其 App 框架），无需克隆 AiNiee App。自带 epub/txt/md/docx/xlsx/pptx/csv/srt/vtt/ass/lrc/po/json 系列。**新 PDF 默认本地 MinerU**，通过独立解释器调用；先阅读并执行 [PDF 工作流](references/pdf_workflow.md)。`AINIEE_REPO` 仅用于原有 Windows Office 非 PDF 回退。

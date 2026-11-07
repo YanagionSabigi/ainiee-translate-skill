@@ -12,14 +12,14 @@ def files(root):
 
 
 def publication_files(repo):
-    """Use the development publisher or the shipped copy in a standalone clone."""
-    root=Path(repo).parent/'pdf-to-epub-skill'
-    if not root.exists():
-        root=Path(repo)/'skills/ainiee-translate/scripts/ainiee_translate/publication_skill'
+    """Use the publisher version maintained in the skill bundle."""
+    root=Path(repo)/'skills/ainiee-translate/scripts/ainiee_translate/publication_skill'
     if not (root/'scripts/translation_contract.py').is_file():
         raise ValueError('Build requires the development publisher or the bundled publication_skill')
     selected={Path('SKILL.md'):root/'SKILL.md'}
-    for name in ('scripts','assets','references'):
+    if (root/'README.md').is_file():
+        selected[Path('README.md')]=root/'README.md'
+    for name in ('scripts','assets','references','docs'):
         selected.update({Path(name)/relative:path for relative,path in files(root/name).items()})
     return selected
 

@@ -1,0 +1,10 @@
+theme.tex and theme-book.tex are unmodified copies from:
+https://github.com/Yalyenea/rosepine-latex
+Commit: c717041d54b5eb5f5f153b97a3a606c147e37402
+Copyright (c) 2026 yfff; MIT License (see LICENSE in this directory).
+
+The surrounding book.tex adapts the Chinese starter's font/layout choices,
+explicitly configures synthetic CJK bold/italic, increases header space, and
+uses reviewed publication order, contents and chapter-end notes.
+The Typst template is an independent implementation of the Dawn palette and
+publication structure. Fonts are not redistributed; install licensed local fonts.
