@@ -1,0 +1,140 @@
+\chapter{连续阅读排版样章}
+\label{ch:reading}
+本章用于检验长篇阅读的视觉密度. 数学示例与占位段落交替出现;
+明确标为占位的段落仅用于检查字距、行距和分页, 不属于译文.
+
+\newcommand{\SampleParagraph}{%
+    这是一段连续阅读用的占位文字. 阅读者沿着正文进入下一项陈述时,
+    应当能够辨认条件与结论的范围, 同时保持原有的阅读节奏.
+    这里重复若干长度相近的句子, 以模拟译书中对记号的解释与过渡.
+    页面上的留白需要服务于段落之间的关系, 不应使每个短结论都成为
+    独立的视觉中心. 本段不引入新的数学事实, 只提供稳定的文字密度.
+    \par}
+\section{从定义进入论证}
+\SampleParagraph
+\begin{definition}[实数列的极限]
+    设 $(a_n)_{n \geq 1}$ 是实数列, $a$ 是实数.
+    若对每个 $\varepsilon > 0$, 都存在正整数 $N$, 使得当 $n \geq N$ 时,
+    有 $|a_n - a| < \varepsilon$, 则称数列 $(a_n)$
+    「\termcn{收敛}(convergent)」于 $a$.
+\end{definition}
+\SampleParagraph
+\begin{lemma}[绝对值的基本估计]
+    对任意实数 $x$、$y$, 有 $|x + y| \leq |x| + |y|$.
+\end{lemma}
+\begin{proposition}[常数列]
+    若对每个正整数 $n$ 都有 $a_n = a$, 则 $(a_n)$ 收敛于 $a$.
+\end{proposition}
+\begin{proof}
+    给定 $\varepsilon > 0$, 取 $N = 1$. 当 $n \geq N$ 时,
+    由常数列的定义, 得 $|a_n - a| = 0 < \varepsilon$.
+    因此满足收敛的定义.
+\end{proof}
+\SampleParagraph
+\begin{theorem}[两个收敛实数列的和仍然收敛, 且其极限等于两个极限的和]
+    \label{thm:sum-limit}
+    设 $(a_n)$、$(b_n)$ 是实数列, 分别收敛于 $a$、$b$.
+    则下列陈述成立:
+    \begin{enumerate}
+        \item
+            数列 $(a_n + b_n)$ 收敛.
+        \item
+            对任意 $\varepsilon > 0$, 存在正整数 $N$, 当 $n \geq N$ 时,
+            有 $|(a_n + b_n) - (a + b)| < \varepsilon$.
+    \end{enumerate}
+    换言之, 两个数列的极限可与有限加法交换:
+    \[
+        \lim_{n \to \infty} (a_n + b_n) = a + b.
+    \]
+\end{theorem}
+\begin{proof}
+    给定 $\varepsilon > 0$. 由 $(a_n)$ 收敛于 $a$, 存在正整数 $N_1$,
+    当 $n \geq N_1$ 时, 有 $|a_n - a| < \varepsilon / 2$.
+    同理由 $(b_n)$ 的收敛性, 存在正整数 $N_2$, 当 $n \geq N_2$ 时,
+    有 $|b_n - b| < \varepsilon / 2$.
+
+    取 $N = \max\{N_1, N_2\}$. 当 $n \geq N$ 时, 两个估计同时成立.
+    运用绝对值的三角不等式, 得
+    \begin{align*}
+        |(a_n + b_n) - (a + b)|
+        & = |(a_n - a) + (b_n - b)| \\
+        & \leq |a_n - a| + |b_n - b| \\
+        & < \frac{\varepsilon}{2} + \frac{\varepsilon}{2}
+          = \varepsilon.
+    \end{align*}
+    因此 $(a_n + b_n)$ 满足以 $a + b$ 为极限的收敛条件.
+\end{proof}
+\SampleParagraph
+\begin{corollary}[有限和]
+    若 $m$ 是正整数, 且对 $1 \leq j \leq m$, 数列 $(a_{j,n})_n$
+    收敛于 $a_j$, 则
+    \[
+        \lim_{n \to \infty} \sum_{j = 1}^{m} a_{j,n}
+        = \sum_{j = 1}^{m} a_j.
+    \]
+    这里 $m$ 固定, 因而可反复应用定理~\ref{thm:sum-limit}.
+\end{corollary}
+\SampleParagraph
+\begin{example}[两个简单数列]
+    令 $a_n = 1 / n$、$b_n = 2 / n$. 两个数列均收敛于 $0$.
+    由和的极限定理, 数列 $(3 / n)$ 也收敛于 $0$.
+\end{example}
+\begin{exercise}[按定义验证]
+    给定 $\varepsilon > 0$, 写出使得 $n \geq N$ 时
+    $3 / n < \varepsilon$ 的一个正整数 $N$.
+\end{exercise}
+\begin{quotationbox}
+    此处为引用排版占位文字. 引用保持较小字号与楷体,
+    末尾单独放置署名, 不使用证明结束符号.
+    \quoteauthor{占位作者}{占位著作}
+\end{quotationbox}
+\section{连续短陈述与多段文字}
+\SampleParagraph
+\begin{lemma}[非负性]
+    对任意实数 $x$, 有 $|x| \geq 0$.
+\end{lemma}
+\begin{lemma}[对称性]
+    对任意实数 $x$, 有 $|-x| = |x|$.
+\end{lemma}
+\begin{proposition}[零点]
+    对任意实数 $x$, $|x| = 0$ 当且仅当 $x = 0$.
+\end{proposition}
+\SampleParagraph
+\SampleParagraph
+\SampleParagraph
+\ifdefined\PaginationStress
+    \section{专用分页压力测试}
+    以下内容故意在页底开始环境, 并使用重复占位文字.
+    \newpage
+    \vspace*{0.83\textheight}
+    \begin{theorem}[页底题头及跨页陈述的排版占位测试]
+        \label{thm:stress}
+        \SampleParagraph
+        \SampleParagraph
+        \SampleParagraph
+        \SampleParagraph
+        \SampleParagraph
+        \SampleParagraph
+        \SampleParagraph
+        \SampleParagraph
+        \SampleParagraph
+        \SampleParagraph
+        \SampleParagraph
+        \SampleParagraph
+    \end{theorem}
+    \begin{theorem}[以列表开始的陈述]
+        \begin{enumerate}
+            \item
+                第一项占位文字.
+            \item
+                第二项占位文字.
+        \end{enumerate}
+    \end{theorem}
+    \begin{theorem}[以公式开始的陈述]
+        \[
+            1 + 1 = 2.
+        \]
+        这是一项公式起首的排版测试.
+    \end{theorem}
+    对跨页陈述的引用为定理~\ref{thm:stress}.
+\fi

@@ -2,7 +2,7 @@
 name: ainiee-translate
 description: Use when translating a novel, EPUB, TXT or PDF on the coding agent itself, resuming an AiNiee cache, exporting reviewed translations, reviewing terminology, or proofreading translations using 微信读书 highlights and reading thoughts through a local review workbench or numbered chat decisions.
 metadata:
-  version: "2.3.0"
+  version: "2.4.0"
 ---
 
 # ainiee-translate 技能指南
@@ -25,6 +25,8 @@ parse → 构建锁定词汇表 → 逐章翻译（agent 按规则） → 写回
 **校对入口：** 术语表人工复核、建议对照或网页审核，先读 [校对工作台](references/review_workbench.md)。微信读书划线/想法校对先读 [微信读书人工校对](references/weread_proofreading.md)，完成定位辨析后默认接入同一工作台。网页正式提交后，用户回到聊天明确说继续，才核验并受控写回；草稿、留言和手机想法不构成最终文本批准。旧静态报告和聊天按编号批复仍可用，整本结束后统一生成成品。
 
 ---
+
+使用、制作或修改 LaTeX 模板时，必须先读取并遵循 [LaTeX 写作规则](rule/LaTeX 写作规则.md)，包括后端代码、标点、空格和数学排版规范。
 
 ## 前置依赖与安装（重要）
 

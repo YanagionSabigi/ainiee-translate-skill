@@ -3,9 +3,12 @@
 \usepackage{xcolor}
 \definecolor{accent}{HTML}{286983}
 \definecolor{rose}{HTML}{d7827e}
-\usepackage{titlesec,fancyhdr}
-\titleformat{\chapter}[display]{\LARGE\bfseries\color{accent}}
-    {\chaptertitlename\ \thechapter}{10pt}{}[{\color{rose}\titlerule}]
+\usepackage{fancyhdr}
+\ctexset{chapter={
+    format=\raggedright\LARGE\bfseries\color{accent},
+    beforeskip=16pt,afterskip=10pt,
+    aftertitle={\par\nobreak\vspace{4pt}\noindent
+        \textcolor{rose}{\rule{\textwidth}{0.4pt}}}}}
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\color{accent}\nouppercase{\leftmark}}
@@ -16,27 +19,38 @@
 \usepackage{graphicx,booktabs,subcaption,multicol,tikz-cd}
 \usepackage[version=4]{mhchem}
 \usepackage{tcolorbox}
+
+% Official Rosé Pine Dawn: https://rosepinetheme.com/palette/
+\definecolor{rpbase}{HTML}{faf4ed}
+\definecolor{rptext}{HTML}{464261}
+\definecolor{proofcolor}{HTML}{286983}
+\definecolor{quotecolor}{HTML}{907aa9}
+\definecolor{examplecolor}{HTML}{56949f}
+\definecolor{exercisecolor}{HTML}{b4637a}
+\color{rptext}
+
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,linkcolor=accent,citecolor=accent,urlcolor=accent}
-\newtheorem{theorem}{定理}[chapter]
-\newtheorem{proposition}[theorem]{命题}
-\newtheorem{lemma}[theorem]{引理}
-\newtheorem{corollary}[theorem]{推论}
-\theoremstyle{definition}
-\newtheorem{example}[theorem]{例}
-\newtheorem{exercise}[theorem]{习题}
-\newtheorem{claim}[theorem]{声明}
-\newtheorem{axiom}[theorem]{公理}
-\newenvironment{quotationbox}{\begin{tcolorbox}[colback=accent!5,
-    colframe=accent!55,boxrule=.5pt]\small\kaishu}{\end{tcolorbox}}
-\newcommand{\quoteauthor}[1]{\par\hfill —— #1}
 \setcounter{tocdepth}{1}
 \setcounter{secnumdepth}{3}
 \makeatletter
-\newcommand{\twocolcontents}{%
+\renewcommand{\tableofcontents}{%
     \chapter*{目录}%
     \begin{multicols}{2}\@starttoc{toc}\end{multicols}}
 \makeatother
+
+\usepackage{enumitem}
+\tcbuselibrary{skins,breakable}
+\setlist[enumerate]{font=\bfseries\color{accent},leftmargin=2.5em}
+\setlist[enumerate,1]{label=\arabic*.}
+\setlist[enumerate,2]{label=(\alph*)}
+\setlist[enumerate,3]{label=\roman*.}
+\setlist[itemize]{leftmargin=2em}
+\setlist[itemize,1]{label=\textcolor{proofcolor}{\textbullet}}
+\setlist[itemize,2]{label=\textcolor{quotecolor}{\(\diamond\)}}
+\setlist[itemize,3]{label=\textcolor{exercisecolor}{\(\circ\)}}
+\input{reading-style.tex}
+
 \begin{document}
 \title{数学排版模板示例}
 \author{模板示例}
@@ -46,7 +60,8 @@
 \chapter*{序言}
 \addcontentsline{toc}{chapter}{序言}
 本示例展示章节、数学环境和出版元素的排版与引用.
-\twocolcontents
+\newpage
+\tableofcontents
 \newpage
 \mainmatter
 \part{基础篇}
@@ -55,6 +70,9 @@
 \section{层级与环境}\label{sec:env}
 \subsection{数学环境}
 \subsubsection{编号示例}
+\begin{definition}[平方]\label{def:square}
+    实数 $x$ 的平方定义为 $x^2 \coloneqq x \cdot x$.
+\end{definition}
 \begin{axiom}\label{ax:one}
     对每个实数 $x$, 有 $x = x$.
 \end{axiom}
@@ -64,7 +82,7 @@
 \begin{lemma}\label{lem:one}
     对每个实数 $x$, 有 $x^2 \geq 0$.
 \end{lemma}
-\begin{theorem}\label{thm:one}
+\begin{theorem}[零元的平方]\label{thm:one}
     若 $x = 0$, 则 $x^2 = 0$.
 \end{theorem}
 \begin{proof}
@@ -73,18 +91,49 @@
 \begin{corollary}\label{cor:one}
     若 $x = 0$, 则 $x^2 + 1 = 1$.
 \end{corollary}
-\begin{example}\label{ex:one}
+\begin{example}[零元]\label{ex:one}
     取 $x = 0$, 则 $x^2 = 0$.
 \end{example}
-\begin{exercise}\label{exercise:one}
+\begin{exercise}[加法]\label{exercise:one}
     验证 $1 + 1 = 2$.
 \end{exercise}
 \begin{claim}\label{claim:one}
     数 $1$ 是正数.
 \end{claim}
-公理~\ref{ax:one}、命题~\ref{prop:one}、引理~\ref{lem:one}、
+定义~\ref{def:square}、公理~\ref{ax:one}、命题~\ref{prop:one}、引理~\ref{lem:one}、
 定理~\ref{thm:one}、推论~\ref{cor:one}、例~\ref{ex:one}、
 习题~\ref{exercise:one} 和声明~\ref{claim:one} 均可跳转.
+
+
+\begin{enumerate}
+    \item
+        先列出条件与符号.
+        \begin{enumerate}
+            \item
+                明确对象所在的集合.
+            \item
+                说明映射的定义域和值域.
+        \end{enumerate}
+    \item
+        再逐步证明结论.
+\end{enumerate}
+\begin{itemize}
+    \item
+        无序列表使用主题色标记.
+        \begin{itemize}
+            \item
+                次级条目使用另一种主题色.
+                \begin{itemize}
+                    \item
+                        第三级条目测试标记与缩进.
+                    \item
+                        第三级长条目用于检查折行后的文字是否保持对齐,
+                        同时观察嵌套列表的行距与层级是否清楚.
+                \end{itemize}
+        \end{itemize}
+    \item
+        正文仍保持清晰的阅读对比度.
+\end{itemize}
 
 \section{公式与图表}
 行内求和 $\sum_{i = 1}^{n} i$ 和积分 $\int_0^1 x\,\mathrm{d}x$
@@ -121,7 +170,7 @@ $\begin{tikzcd}[ampersand replacement=\&,cramped,sep=tiny]
 这是脚注示例.\footnote{脚注内容及返回链接.}
 \begin{quotationbox}
     数学的语言可以简洁地表达结构与关系.
-    \quoteauthor{示例作者, 《示例文集》}
+    \quoteauthor{示例作者}{示例文集}
 \end{quotationbox}
 \begin{table}[htbp]
     \centering
@@ -159,6 +208,8 @@ $\begin{tikzcd}[ampersand replacement=\&,cramped,sep=tiny]
 \end{figure}
 表~\ref{tab:sample}、图~\ref{fig:single} 和图~\ref{fig:pair}
 提供交叉引用. 另见文献~\cite{sample}.
+
+\input{reading-sample.tex}
 
 \appendix
 \chapter{附录甲}\label{app:a}
