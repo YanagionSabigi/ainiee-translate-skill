@@ -23,6 +23,11 @@
 \definecolor{examplecolor}{HTML}{56949f}
 \definecolor{exercisecolor}{HTML}{b4637a}
 \color{rptext}
+\ifdefined\WhitePaper
+    \pagecolor{white}
+\else
+    \pagecolor{rpbase}
+\fi
 
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,linkcolor=accent,citecolor=accent,urlcolor=accent}

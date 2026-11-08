@@ -3,7 +3,7 @@
 A profile carries the user's whole task setup: source/target language, the
 selected translate & polish prompts, custom prompt blocks, glossary
 (prompt_dictionary_data), exclusion list, writing style / world / characters.
-This one-shot extracts all of it into ~/.ainiee-translate/modules/<name>/.
+This one-shot extracts all of it into ~/.ainiee-translate/翻译预设/翻译模组/<name>/.
 """
 import argparse
 import json
@@ -34,12 +34,12 @@ def import_profile(profile_path: str, name: str, target_language: str | None = N
 
     parts = [p for p in (prompt.build_translate_prompt(cfg=prof),
                          prompt.build_user_prompt(cfg=prof)) if p]
-    with open(os.path.join(d, "translate_prompt.md"), "w", encoding="utf-8") as f:
+    with open(os.path.join(d, module.TRANSLATE_PROMPT), "w", encoding="utf-8") as f:
         f.write("\n\n".join(parts))
 
     polish = prompt.build_polish_prompt(cfg=prof)  # only written if the profile has one
     if polish:
-        with open(os.path.join(d, "polish_prompt.md"), "w", encoding="utf-8") as f:
+        with open(os.path.join(d, module.POLISH_PROMPT), "w", encoding="utf-8") as f:
             f.write(polish)
 
     switches = {k: bool(prof.get(f"{k}_switch")) for k in

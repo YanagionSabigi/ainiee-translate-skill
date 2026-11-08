@@ -6,7 +6,7 @@
 
 建议先根据文献内容和翻译任务生成领域分类，核对名称、层级和适用范围后再给词条分配分类。系统只定义分类结构，不附带学科枚举、数学分类树、默认领域、词库或缩写。空分类合法，不需要为了创建 module 填写“其他”等占位分类。
 
-新建 module 会生成空的 `glossary.locked.json` 和 `glossary.locked.policy.json`，前者保存唯一正式词表，后者保存任务的姓名模式和分类选择。两份 JSON Schema 随运行脚本的 `ainiee_translate/schemas/` 提供。
+新建 module 会生成空的 `glossary.locked.json` 和 `glossary.locked.policy.json`，前者保存唯一正式词表，后者保存任务的姓名模式和分类选择。新模组同时包含 `glossary.locked.schema.json`，两份原始 JSON Schema 随运行脚本的 `ainiee_translate/schemas/` 提供。
 
 ```text
 <PFX> -m ainiee_translate.module create <名字> --source-language English --target-language 简体中文 --name-mode D
@@ -65,3 +65,7 @@
 校验覆盖 Schema、分类父关系与循环、ID／引用和模板约束；机械检查不证明人物身份、词义或译法正确。`AINIEE_GLOSSARY_SCHEMA` 可追加项目级校验，约束原始文档。
 
 使用[工作台](review_workbench.md)核对原始字段。新表按稳定 ID 绑定；模板审核编辑模板而非展开结果。未编辑的语言、引用、分类等字段保留，正式提交后才受控写回。政策或业务身份漂移须重新准备审核，不能应用旧政策下的决定。Agent 不代用户提交真实决定。
+
+## 目标译名与迁移
+
+人名 `chinese_translation` 写音译或通行中文译名；术语 `target_form` 写目标语言译法，不因正文默认 D 而重复源文。源文与转写分别在 `source_form` 和 `latin_form` 保存。译名和 note 遵循中英文一个空格及 `-`（词内／同一姓名）、`–`（两位人物）、`——`（中文破折号）的区分；带公式词条使用 TeX。用户说明与打包命令见[术语表文档](../scripts/ainiee_translate/assets/docs/术语表文档.md)。

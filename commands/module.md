@@ -3,7 +3,7 @@ description: 管理翻译模块（list / show / create / load）
 argument-hint: <list|show|create|load> [名字] [--work 项目目录]
 allowed-tools: Bash
 ---
-管理模块（存放于 `~/.ainiee-translate/modules/`）。把用户给的参数透传给 module CLI：
+管理模块（存放于 `~/.ainiee-translate/翻译预设/翻译模组/`）。把用户给的参数透传给 module CLI：
 
 ```bash
 PYTHONPATH="${CLAUDE_PLUGIN_ROOT}/skills/ainiee-translate/scripts" \
@@ -22,3 +22,5 @@ PYTHONPATH="${CLAUDE_PLUGIN_ROOT}/skills/ainiee-translate/scripts" \
 `create` 可用 `--name-mode A|B|C|D` 选择姓名模式（默认 D），用 `--categories <分类JSON>` 导入自己准备的分类，以重复的 `--category <ID>` 选择范围。人名 A 完全汉化，B 拉丁转写，C 保留源文，D 按经确认的姓名体系处理。详见 [默认术语表契约](../skills/ainiee-translate/references/glossary_schema.md)。
 
 加载新 module 时须连同词表的 `.policy.json` 快照复制；移动或过滤词表也须携带配套政策。旧 module/profile 不自动迁移。
+
+新模组另含 `预设参数.md`、`语言风格.md` 和 `glossary.locked.schema.json`；用 `--punctuation-mode full|half` 选择标点，不默认输出格式。加载映射见[翻译模组](../skills/ainiee-translate/scripts/ainiee_translate/assets/docs/翻译模组.md)。

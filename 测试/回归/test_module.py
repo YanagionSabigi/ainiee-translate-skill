@@ -17,15 +17,15 @@ def test_create_then_list_then_show(home):
     info = module.show_module("demo")
     assert info["module"]["target_language"] == "简体中文"
     assert info["terms"] == 0 and info["characters"] == 0
-    assert "translate_prompt.md" in info["files"]
+    assert "初次翻译.md" in info["files"]
 
 
 def test_load_copies_into_work_and_sets_active(home, tmp_path):
     d = module.create_module("demo")
     # give the module some content to copy
-    with open(os.path.join(d, "translate_prompt.md"), "w", encoding="utf-8") as f:
+    with open(os.path.join(d, "初次翻译.md"), "w", encoding="utf-8") as f:
         f.write("RULES")
-    with open(os.path.join(d, "polish_prompt.md"), "w", encoding="utf-8") as f:
+    with open(os.path.join(d, "润色校对.md"), "w", encoding="utf-8") as f:
         f.write("POLISH")
     work = tmp_path / "proj"
     r = module.load_module("demo", str(work))

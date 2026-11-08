@@ -8,7 +8,7 @@
 
 本项目依赖并继承两个上游项目的成果：[AiNiee](https://github.com/NEKOparapa/AiNiee) 提供基础文件读写、缓存结构及翻译规则，[AiNiee-skill（ainiee-translate-skill）](https://github.com/xuanji86/ainiee-translate-skill) 提供 Agent 翻译技能、提示词与术语表管理、批次工作流和插件基础。本项目在此基础上扩展 PDF 出版与阅读校对；基础运行所需的相关代码和技能文件已随本项目包含，无需为 EPUB / TXT 另外安装上述两个上游项目。
 
-> 当前版本：`v2.4.0`，更新连续阅读模板、Dawn／白底样式和三级列表示例，保留通用术语表与阅读校对功能。核对日期：2026-11-07。
+> 当前版本：`v2.4.0`，更新连续阅读模板、Dawn／白底样式和三级列表示例，保留通用术语表与阅读校对功能。核对日期：2026-11-08。
 
 ## 可以做什么
 
@@ -103,41 +103,41 @@ EPUB 的范围工具会建议排除版权、广告等非正文；应先检查预
 项目放在 D:/Translations/sample，检查已有进度后继续。
 ```
 
-## 设置翻译模板：初翻、润色与术语表
+## 开始前选择模式与翻译模组
 
-新建模块默认使用通用术语表，分别整理人名、术语、缩写和禁翻项。保留 A 汉化、B 拉丁转写、C 保留源文、D 按姓名体系处理四种人名模式，默认 D。建议创建前按当前文献提前生成并确认领域分类；工具不预置任何学科或分类，空分类也可以使用。加载和过滤时配套携带姓名政策，旧模块与 AiNiee profile 不自动迁移。字段与操作见[默认术语表契约](skills/ainiee-translate/references/glossary_schema.md)。
+开始翻译前，明确三项选择：**标点用全角还是半角、人名用 A／B／C／D 哪种模式、输出什么格式及模板**。默认标点为全角、人名为 D；翻译模组不设置默认输出格式。
 
-翻译模板是可复用的任务设置，在工具中称为“模块”。设置前，先向 Agent 提供源语言、目标语言、书籍题材、目标读者、译名政策和偏好的译文例段；已有 AiNiee profile 时可以直接导入，再按当前书复核。三项内容按以下标准分别生成：
+| 文档 | 你可以在其中确认什么 |
+| --- | --- |
+| [标点符号与空格](src/ainiee_translate/assets/docs/标点符号.md) | 两种模式对照表、引号、横线、数字、单位和空格规则 |
+| [人名翻译模式](src/ainiee_translate/assets/docs/人名翻译模式.md) | A／B／C／D 的设计考量，为什么默认 D |
+| [输出模板选择](src/ainiee_translate/assets/docs/输出模板选择.md) | EPUB 文件、六份 LaTeX 模板与实际示例截图，Typst 预留 |
+| [LaTeX 后端设计](src/ainiee_translate/assets/docs/LaTeX后端设计.md) | 后端代码、数学排版和格式校正的完整有序规范 |
+| [术语表文档](src/ainiee_translate/assets/docs/术语表文档.md) | 四类记录与 Schema、人工审核、公式格式、打包迁移 |
+| [翻译模组](src/ainiee_translate/assets/docs/翻译模组.md) | 中文目录、六份用户文件、创建／加载与旧模组兼容 |
 
-| 项目 | 文件与作用 | 生成标准 |
-| --- | --- | --- |
-| **初翻** | 模块中的 `translate_prompt.md`，加载后成为项目的 `work/user_prompt.md` | 写明语言方向、题材和叙述／对白风格；以源文为依据完整传达信息，检查否定、指代、人物关系、数字和单位，不增补情节或删减难句。逐段与 `text_index` 对齐，保留强调、占位符及 PDF 结构标记，遵循锁定译名；用原文—译文例段说明期望表达，歧义列为待审。 |
-| **润色** | `polish_prompt.md`，加载后成为 `work/polish_prompt.md` | 同时对照原文和初翻，改善语序、搭配、节奏、对白及翻译腔；保留原意、信息量、人物口吻、锁定译名和结构标记。写明允许调整什么、哪些用户确认的写法不得改，并用“原译—改译—理由”示例说明尺度；准确通顺的句子可以保留，不为换说法而重写。 |
-| **术语表** | `glossary.locked.json`，加载后成为 `work/glossary.locked.json`；新格式另带 `.policy.json` | 从当前书和用户资料抽取候选，结合上下文确定译法。新表使用 `persons`、`terminology`、`abbreviations`、`non_translate`；旧表继续使用 `characters/terms/non_translate`。统一原形、别名、译名和姓名政策。同姓不能误合并，歧义交用户确认，不编造词条或直接套用另一本书的表。 |
-
-生成后先检查三者是否一致：初翻和润色都服从同一份锁定术语表；提示词中的示例不能与译名政策冲突。用一段代表性正文和对白试译、试润色，确认后再用于全书。新增术语先列为候选，按约定确认后更新锁定表；项目提供术语 JSON Schema 时，还需通过该 Schema 校验。术语表结构可用 `python -m ainiee_translate.glossary lint --locked <文件路径>` 检查，机械检查不能代替译名审阅。
-
-可直接这样要求 Agent：
+翻译模组默认位于 `~/.ainiee-translate/翻译预设/翻译模组/<你取的名字>/`，主要内容为：
 
 ```text
-为这本书建立 my-book 翻译模块，源语言英语，目标语言简体中文。
-先根据我提供的原文、术语资料和译文偏好生成初翻提示词、润色提示词、术语表。
-初翻要完整准确，润色要对照原文改善中文表达，二者均保留标记并遵循锁定译名。
-术语只收录有依据的词条，人物别名不得混淆；未定译法单独列给我确认。
-展示这三份草稿，并用同一组例段演示初翻和润色的差别，确认后加载到项目。
+初次翻译.md               # 初翻：完整准确、逐段对齐、保留标记和锁定译名
+预设参数.md               # 标点符号模式、人名翻译模式；输出格式每次任务另选
+润色校对.md               # 对照原文改善表达，保留信息、口吻和结构
+语言风格.md               # 题材、读者、语气与例段
+glossary.locked.json      # 人名、术语、缩写、禁翻项
+glossary.locked.schema.json
 ```
 
-模块默认保存在 `~/.ainiee-translate/modules/<模块名>/`。手动创建和启用的 PowerShell 示例：
+目录中另有 `module.json` 与绑定姓名政策的 `.policy.json`。从当前书和用户资料提取候选后，先核实身份、别名、上下文与领域，再在工作台确认；没有依据的译法列为待审。人名的中文译名资料与正文的姓名模式分开保存，模式 D 不要求目标译名重复源文。
 
 ```powershell
-& $env:AINIEE_PY -m ainiee_translate.module create my-book --source-language en --target-language zh
-# 在模块目录中完善 translate_prompt.md、polish_prompt.md、glossary.locked.json，审阅后再加载。
-& $env:AINIEE_PY -m ainiee_translate.module load my-book --work 'D:/Translations/sample'
+& $env:AINIEE_PY -m ainiee_translate.module create 我的模组 --source-language en --target-language zh --punctuation-mode full --name-mode D
+# 完善中文提示词、风格、术语表后加载；输出格式在任务中另选。
+& $env:AINIEE_PY -m ainiee_translate.module load 我的模组 --work 'D:/Translations/sample'
 ```
 
-`module create` 只建立骨架，不会自动生成符合上述标准的提示词和词条；模块加载会把这三份文件复制进项目。修改模块后需重新加载才能用于该项目，已有项目文件会先备份；加载本身不会重译已完成的内容。
+`create` 建立空骨架，初翻、润色和风格内容由你与 Agent 按文献确定；用同一组例段试译、试润色，确认后用于全书。修改模组后需重新加载，已有项目文件会先备份，已译内容不会自动重译。旧的英文目录与提示词仍可读取；旧 AiNiee profile 可导入，不自动升级词表格式。
 
-已有 AiNiee profile 时，可用 `python -m ainiee_translate.profile import --profile <profile.json> --name <模块名>` 导入其初翻、润色和术语设置；profile 没有润色配置时不会凭空生成。Claude Code 插件也提供 `/ainiee-translate:gen-prompt translate <模块名>`、`/ainiee-translate:gen-prompt polish <模块名>` 和 `/ainiee-translate:import-profile <profile.json> <模块名>`，提示词由 Agent 起草后供你审阅。
+[通用翻译预设模组](skills/ainiee-translate/翻译预设/翻译模组/通用翻译预设模组/)暂留空，不预设题材与内容。新模组由用户自行命名。完整流程和迁移方式见上表。
 
 ## 脚本使用示例
 
