@@ -1,5 +1,7 @@
 # 多 agent 并行翻译（大书加速）
 
+当前项目若有 `work/预设参数.md`，先读取并按其中 full/half 与 A/B/C/D 执行，再读取 `work/style.md`。以下示例中的全角、禁用直角引号或保留源文政策仅为示例；用户明确选择的半角、引号和姓名模式优先，风格检查须采用同一政策。输出格式单独选择。
+
 把步骤 5 的逐章串行翻译，改为**多个 subagent 同时翻译不同章节范围**，墙钟时间≈最慢的那个 agent。
 编排的每一步都有确定性命令：`batch split` 分组、`glossary filter` 瘦身词汇表、`batch validate` 验收、
 `batch write` 一次串行写回多组。主控不再手写任何 Python heredoc。

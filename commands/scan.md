@@ -16,4 +16,4 @@ PYTHONPATH="${CLAUDE_PLUGIN_ROOT}/skills/ainiee-translate/scripts" \
 - `stray_latin`（**复查列表**）：译文里出现、原文没有的英文 token（幻觉错名 `Vic`/`Sam`/`Lt`）；含粘连词/术语噪声，眼判。
 - `merges`：原文丢空格的粘连词（`thenaiskosfragment`、`speciesDraco`）。
 
-确认的真名/地名补进 `glossary.locked.json` 的 `characters`、保留英文的通名补进 `terms`（`keep_source:true`），再跑 `verify`。改已润色段用 `polish write` 保住状态。
+新表将确认的人名补入 `persons`，术语补入 `terminology`，缩写补入 `abbreviations`，保持稳定 ID 和明确译名；旧表仍用 `characters/terms`。正文的名字形式服从当前 A/B/C/D 政策，扫描的英文保留提示仅供辨析，再跑 `verify`。改已润色段用 `polish write` 保住状态。

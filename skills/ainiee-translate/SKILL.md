@@ -166,57 +166,37 @@ v1.4.1 及更早版本的 epub 解析用 `soup.get_text(strip=True)` 抽文本�
 
 ---
 
-## 步骤 3：构建并锁定词汇表
+## 步骤 3：生成并审核锁定术语表
 
-创建 module、整理新格式词表、切换人名模式或过滤子表前，先读[默认术语表契约](references/glossary_schema.md)。新建表采用人名／术语／缩写通用 Schema；建议按当前文献提前生成并核对领域分类，工具不预置分类，空分类合法。旧 profile 和旧 module 不自动迁移。
+新任务先读取[术语表文档](scripts/ainiee_translate/assets/docs/术语表文档.md)与[Schema 契约](references/glossary_schema.md)。从当前文献和用户资料提取有上下文依据的候选，生成结构化 `glossary.locked.json`：`persons`、`terminology`、`abbreviations`、`non_translate`；分类自定义，不预置领域。
 
-项目提供 `术语表.md`、`schemas/glossary.locked.schema.json` 时，先按该 Schema 生成并验证 locked JSON，成功后才加载/翻译；通过 `AINIEE_GLOSSARY_SCHEMA` 启用项目级加载校验。读取并应用项目 `style.md`。个人 Schema 与风格只约束对应项目，操作见 [PDF 工作流](references/pdf_workflow.md#translate-polish-and-verify)。
+人名的 `chinese_translation` 填明确音译或通行中文译名，术语的 `target_form` 填目标语言译法；不要因为正文默认 D 就在这些目标字段重复源语言。源文另存 `source_form`，转写另存 `latin_form`。动态冠名可用 `target_template` 和显式人名引用，模板与固定译文互斥；缺少依据就标待核实，不臆造译名。
 
-从 AiNiee 公共术语表（`prompt_dictionary_data`）和可选的项目分析缓存（`analysis_v1`）生成锁定表：
+译名和 note 遵循[标点说明](scripts/ainiee_translate/assets/docs/标点符号.md)：中英文、汉字与数字间合适地加一个空格，数字与单位不加空格；同一姓名与词内用 `-`，两个人名之间用 `–`，中文破折号用 `——`。带公式的术语用 TeX 记录，JSON 反斜杠须转义。识别源文保留实际写法。
 
-```bash
-<PFX> -m ainiee_translate.glossary \
-  --config "<AiNiee config.json 路径>" \
-  --analysis "<项目分析缓存路径（可选）>" \
-  --out "$WORK/work/glossary.locked.json"
+按[校对工作台](references/review_workbench.md)生成术语审核页面，展示上下文、页码、候选和依据；没有真实建议时保持无建议状态。用户在网页正式提交并回到聊天说继续后，核验版本再写回。新条目和歧义先审核，再锁定。
+
+```text
+<PFX> -m ainiee_translate.glossary lint --locked "$WORK/work/glossary.locked.json"
+<PFX> -m ainiee_translate.glossary_bundle --locked "$WORK/work/glossary.locked.json" --out "$WORK/out/术语迁移包.zip" --notes 本表特殊说明.md
 ```
 
-- `--config`：AiNiee 的 `config.json`，路径随平台而异：
-  - macOS：`~/Library/Application Support/AiNiee/config.json`
-  - Windows：`%APPDATA%\AiNiee\config.json`
-  - Linux：`~/.config/AiNiee/config.json`
-  - 找不到时，在 AiNiee 应用的设置/数据目录里定位 `config.json`。
-- `--analysis` 可省略（无项目分析时跳过），形如 `.../ProjectCache/<project_id>/AinieeCacheData.json`。
-- 生成后，**必须人工 review 并锁定**：检查人名分类（是否保留原文）、地名/种族译法、音译唯一性。复核时特别注意：自动清洗按姓氏末词归并同一角色，可能把**同姓的不同角色**误并为一条——检查每条的 aliases 里没有混入另一个人。
-- 默认用 [校对工作台](references/review_workbench.md)逐项复核；有真实建议表再传 `--proposals`，没有则保留无建议状态，支持手动修改或留言。
-- 锁定表格式：
+生成锁定表并准备跨项目复用时，配套运行打包命令。先整理该表特殊的身份、转写、领域、公式、固定译法及标点说明，再用 `--notes` 附入包中。包须包含词表、Schema、政策及其 Schema、术语表文档和本表说明；迁移不等于自动认可新文献中的所有译法。
 
-```json
-{
-  "characters": [
-    {"canonical": "James Marlow", "render": "James Marlow",
-     "aliases": ["Marlow", "Jim"], "gender": "M", "note": "船长"}
-  ],
-  "terms": [
-    {"src": "the Ravensguard", "dst": "鸦卫军", "category": "faction"},
-    {"src": "Highmark", "dst": "Highmark", "keep_source": true}
-  ],
-  "non_translate": [{"marker": "<i>", "category": "tag"}]
-}
+已有 AiNiee config/profile 的 `glossary --config ... --analysis ... --out ...` 入口仍生成旧 `characters/terms` 格式，仅用于兼容导入，不能当作新建术语表的默认入口。同姓自动归并结果要人工核实；旧词表须先人工迁移再使用新格式打包功能。
+
+## 翻译模组：复用任务设置
+
+先读[翻译模组](scripts/ainiee_translate/assets/docs/翻译模组.md)。新目录是 `~/.ainiee-translate/翻译预设/翻译模组/<用户命名>/`，包含 `初次翻译.md`、`预设参数.md`、`润色校对.md`、`语言风格.md`、`glossary.locked.json`、`glossary.locked.schema.json`，另有 module 元数据和绑定政策。通用预设位置暂留空。
+
+```text
+<PFX> -m ainiee_translate.module create <名字> --source-language en --target-language zh --punctuation-mode full --name-mode D
+<PFX> -m ainiee_translate.module load <名字> --work <项目目录>
 ```
 
----
+翻译与润色前读取 `work/预设参数.md`、`work/style.md`、本批提示词和锁定词表；项目旁有个人 Schema 时先验证。`预设参数.md` 明确 full/half 和 A/B/C/D；每次任务单独确认输出格式，不在模组中默认输出。PDF 项目将标点模式同步到 `review.json.structure_rules.punctuation_mode`。半角模式或明确启用直角引号时，机械 audit 的相应风格警告要按所选政策辨析，不自动改回全角或把所选引号当错误。
 
-## 模块（可选）：一套设置应对不同书
-
-「模块」= 一个可复用的任务设置包，存于 `~/.ainiee-translate/modules/<名字>/`，含：翻译提示词、润色提示词、词汇表、禁翻表、风格/世界观/角色、源/目标语言。同一个技能/插件靠切换模块应对不同小说/文档。
-
-- 导入 AiNiee profile 为模块：`<PFX> -m ainiee_translate.profile import --profile <profile.json> --name <名字>`
-- 新建空模块：`<PFX> -m ainiee_translate.module create <名字> [--source-language X --target-language Y --name-mode A|B|C|D]`（默认 D，分类与词条为空）
-- 列出/查看：`<PFX> -m ainiee_translate.module list` / `show <名字>`
-- 加载进项目：`<PFX> -m ainiee_translate.module load <名字> --work ~/my-project`
-
-加载把模块的 `translate_prompt.md`→`work/user_prompt.md`、`polish_prompt.md`、`glossary.locked.json` 拷进项目 `work/`；新格式同时携带哈希绑定的 `glossary.locked.policy.json`，固定当前姓名模式和分类选择。移动词表必须带配套政策，不能手改后忽略哈希；缺失或不符应报错。**不用模块的项目，流程与下文完全一致。** 此外 `prompt.py` 还能从 AiNiee 配置/profile 提取所选系统提示词（`--translate-system`）与润色提示词（`--polish`）。命令行入口见附录 C。
+加载时复制六项用户文件并重新绑定当前人名政策，保留已有项目文件备份；旧英文模组兼容读取，不自动迁移。模板选择见[输出模板](scripts/ainiee_translate/assets/docs/输出模板选择.md)，姓名选择见[人名模式](scripts/ainiee_translate/assets/docs/人名翻译模式.md)。
 
 ---
 

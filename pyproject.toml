@@ -26,7 +26,7 @@ pythonpath = ["src"]
 addopts = "-q"
 
 [tool.setuptools.package-data]
-ainiee_translate = ["*.html", "_vendor/NOTICE", "schemas/*.json", "schemas/*NOTICE*", "assets/*.css", "assets/template/*", "assets/template/typst/*", "assets/template/tex/*/*/*", "assets/template/tex/*.py", "assets/template/epub/*", "assets/template/epub/reference-book/*", "assets/template/epub/reference-book/assets/*", "assets/template/epub/weread-compat/*", "templates/book/*.yaml", "templates/book/*/*", "templates/book/latex/rosepine/*", "workbench_runtime/schemas/*.json", "workbench_runtime/web/**/*", "workbench_runtime/examples/**/*", "workbench_runtime/skill/**/*", "workbench_runtime/LICENSE", "workbench_runtime/UPSTREAM.md", "workbench_runtime/requirements.txt", "workbench_runtime/review_workbench/portable_templates/*"]
+ainiee_translate = ["*.html", "_vendor/NOTICE", "schemas/*.json", "schemas/*NOTICE*", "assets/*.css", "assets/docs/*.md", "assets/docs/images/*.png", "assets/template/*", "assets/template/typst/*", "assets/template/tex/*/*/*", "assets/template/tex/*.py", "assets/template/epub/*", "assets/template/epub/reference-book/*", "assets/template/epub/reference-book/assets/*", "assets/template/epub/weread-compat/*", "templates/book/*.yaml", "templates/book/*/*", "templates/book/latex/rosepine/*", "workbench_runtime/schemas/*.json", "workbench_runtime/web/**/*", "workbench_runtime/examples/**/*", "workbench_runtime/skill/**/*", "workbench_runtime/LICENSE", "workbench_runtime/UPSTREAM.md", "workbench_runtime/requirements.txt", "workbench_runtime/review_workbench/portable_templates/*"]
 
 [build-system]
 requires = ["setuptools"]

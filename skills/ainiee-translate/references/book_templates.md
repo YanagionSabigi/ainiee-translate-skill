@@ -5,6 +5,7 @@
 The skill ZIP and wheel also include independent XeLaTeX examples under
 `scripts/ainiee_translate/assets/template/tex/`: `rosepine/book`,
 `rosepine/article`, `mathtranslations/book`, and `mathtranslations/article`.
+Rosé Pine book and article each also provide a white-paper `white.tex` variant, for six previews in total.
 Each directory contains editable `main.tex` and a PDF preview. Copy a complete
 example directory into your project and compile `main.tex` twice with XeLaTeX.
 The examples use the local Fandol fonts supplied by a suitable TeX installation;
@@ -110,3 +111,5 @@ Typst independently uses the same palette; pagination and font metrics can diffe
 Review the compiled PDF: open contents links and every note return, examine
 chapter boundaries, table continuation, formulas, captions and glyphs. Compiler
 success does not establish source fidelity or correct mathematical translation.
+
+中文模板索引及截图：[输出模板选择](../scripts/ainiee_translate/assets/docs/输出模板选择.md)。

@@ -1,14 +1,10 @@
 ---
-description: 查看模块的提示词与词汇表摘要
-argument-hint: [模块名]
+description: 查看模组的提示词与词汇表摘要
+argument-hint: [模组名]
 allowed-tools: Bash, Read
 ---
-显示模块 `$1`（未给则用当前激活模块）的元数据、术语/角色/禁翻计数，以及翻译/润色提示词开头。
+使用 module CLI 的 show 读取指定模组的元数据、完整文件列表与术语统计；未给名字时从 AINIEE_TRANSLATE_HOME 下的 active.json 读取 active_module。通过 module.module_dir(name) 解析真实目录，使用 Read 展示初次翻译.md、润色校对.md、预设参数.md、语言风格.md；旧模组回退为 translate_prompt.md、polish_prompt.md、style.md。不得硬编码用户主目录或将名字拼入 shell 命令。
 
 ```bash
-PY="${AINIEE_PY:-python3}"; PYTHONPATH="${CLAUDE_PLUGIN_ROOT}/skills/ainiee-translate/scripts"
-NAME="$1"; [ -z "$NAME" ] && NAME=$(PYTHONPATH="$PYTHONPATH" $PY -c "import json,os;p=os.path.expanduser(os.environ.get('AINIEE_TRANSLATE_HOME','~/.ainiee-translate')+'/active.json');print(json.load(open(p)).get('active_module','')) if os.path.exists(p) else print('')")
-PYTHONPATH="$PYTHONPATH" $PY -m ainiee_translate.module show "$NAME"
-echo "--- translate_prompt.md ---"; head -8 ~/.ainiee-translate/modules/"$NAME"/translate_prompt.md 2>/dev/null
-echo "--- polish_prompt.md ---";    head -8 ~/.ainiee-translate/modules/"$NAME"/polish_prompt.md 2>/dev/null || echo "(无润色提示词)"
+PYTHONPATH="${CLAUDE_PLUGIN_ROOT}/skills/ainiee-translate/scripts" "${AINIEE_PY:-python3}" -m ainiee_translate.module show "$1"
 ```

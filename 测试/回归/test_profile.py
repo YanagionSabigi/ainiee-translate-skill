@@ -24,10 +24,10 @@ def test_import_profile_creates_module(home):
     assert {"Korin", "Highmark"} <= {t["src"] for t in locked["terms"]}
     assert "Alpha Centauri III" in {n["marker"] for n in locked["non_translate"]}
     # translate prompt = system prompt + user blocks + writing style
-    tp = open(os.path.join(d, "translate_prompt.md"), encoding="utf-8").read()
+    tp = open(os.path.join(d, "初次翻译.md"), encoding="utf-8").read()
     assert "军衔后置于姓名" in tp and "写作风格" in tp
     # polish prompt present (profile has one)
-    pp = open(os.path.join(d, "polish_prompt.md"), encoding="utf-8").read()
+    pp = open(os.path.join(d, "润色校对.md"), encoding="utf-8").read()
     assert "把初译润色得更自然" in pp
     # importable -> shows up in list
     assert "demo" in [m["name"] for m in module.list_modules()]
